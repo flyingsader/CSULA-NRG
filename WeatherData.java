@@ -1,4 +1,3 @@
-
 public class WeatherData {
 
 	String Locality;
@@ -29,7 +28,7 @@ public class WeatherData {
 	}
 	
 	public String toSqlEntry(){
-		return "Insert Into Devices Values('" + this.Locality + "', '" + this.Timestamp + "', " + this.Temperature + ", " + this.Windspeed + ", " + this.WindDir + ", " + this.SolarRad + ");";
+		return "Insert Into WeatherData Values('" + this.Locality + "', '" + this.Timestamp + "', " + this.Temperature + ", " + this.Windspeed + ", " + this.WindDir + ", " + this.SolarRad + ");";
 	}
 
 }

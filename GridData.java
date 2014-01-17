@@ -1,4 +1,3 @@
-
 public class GridData {
 	String Locality;
 	String Timestamp;
@@ -24,6 +23,6 @@ public class GridData {
 	}
 	
 	public String toSqlEntry(){
-		return "Insert Into Devices Values('" + this.Locality + "', '" + this.Timestamp + "', " + this.Capacity + ", " + this.Demand + ");";
+		return "Insert Into GridData Values('" + this.Locality + "', '" + this.Timestamp + "', " + this.Capacity + ", " + this.Demand + ");";
 	}
 }

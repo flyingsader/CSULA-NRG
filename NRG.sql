@@ -21,7 +21,7 @@ CREATE TABLE DeviceData (
 );
 
 CREATE TABLE WeatherData (
-	Locality varchar (10),
+	Locality varchar (20),
 	WeatherTimestamp TIMESTAMP,
 	PRIMARY KEY (Locality, WeatherTimestamp),
 	Temperature int NULL,
@@ -31,7 +31,7 @@ CREATE TABLE WeatherData (
 );
 
 CREATE TABLE GridData (
-	Locality varchar (10) ,
+	Locality varchar (20) ,
 	GridTimestamp TIMESTAMP,
 	PRIMARY KEY (Locality, GridTimestamp),
 	Cap int NULL,

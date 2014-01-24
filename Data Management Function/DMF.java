@@ -3,7 +3,7 @@ public class DMF{
 	private int currentGridDeficit;
 	
 	public List<WeatherData> getAllWeatherData(){
-		//Retrieves all weather data
+		//Retrieves all weather data edit test
 	}
 	
 	public List<GridData> getAllGridData(){

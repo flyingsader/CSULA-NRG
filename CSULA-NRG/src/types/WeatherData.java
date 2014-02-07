@@ -29,6 +29,15 @@ public class WeatherData {
 		this.solarRad = (int)(Math.random() * 50) + 50;
 	}
 	
+	public WeatherData(String loc, String time, int temp, int windsp, int windDir, int sol){
+		this.locality = loc;
+		this.timestamp = time;
+		this.temperature = temp;
+		this.windspeed = windsp;
+		this.windDir = windDir;
+		this.solarRad = sol;
+	}
+	
 	public String getLocality() {
 		return locality;
 	}

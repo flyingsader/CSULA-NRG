@@ -2,8 +2,11 @@ package functions;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import types.Device;
 import types.GridData;
@@ -32,10 +35,18 @@ public class DMF{
 		
 		String tmp = "Select * from WeatherData";
 		Statement stmt = connection.createStatement();
-		stmt.executeQuery(tmp);
-
+		ResultSet rs = stmt.executeQuery(tmp);
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int cols = rsmd.getColumnCount();		
 		
-		return null;
+		List<WeatherData> resultData = new ArrayList<WeatherData>();
+		
+		while(!rs.isAfterLast()){
+			resultData.add(new WeatherData(rs.getString(0), rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getInt(4), rs.getInt(5)));
+			rs.next();
+		}
+
+		return resultData;
 	}
 	
 	public List<GridData> getAllGridData(){

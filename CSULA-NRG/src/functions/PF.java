@@ -33,10 +33,14 @@ public class PF {
 	public void sendGridDeficitPredictionToDMF()
 	{
 		try {
+			// request data to analyze from DMF
 			List<WeatherData> wData = _dmf.getAllWeatherData();
 			List<GridData> gData = _dmf.getAllGridData();
 			GridData prediction = null;
 			
+			// compare past x years of days to detect pattern
+			// once pattern is detected, determine expected grid data
+			// send expected grid data to DMF
 			
 			
 			_dmf.setDeficit((int) (prediction.getCapacity() - (prediction.getDemand() * 1.01)));

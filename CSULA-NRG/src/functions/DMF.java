@@ -20,15 +20,15 @@ public class DMF{
 	String password;
 	Connection connection;
 	
+	private int currentGridDeficit;
+	
 	DMF() throws SQLException{
-		String url = "jdbc:mysql://localhost:3306/cs245_final";
+		String url = "jdbc:mysql://localhost:3306/Classic Laura";
 		String username = "root";
-		String password = "963Qsb85c";
+		String password = "Classic Laura";
 		Connection connection = null;
 		connection = DriverManager.getConnection(url, username, password);
 	}
-	
-	private int currentGridDeficit;
 	
 	public List<WeatherData> getAllWeatherData() throws SQLException{
 		//Retrieves all weather data edit test

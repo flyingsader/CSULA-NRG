@@ -137,12 +137,21 @@ public class ResponseFunction {
 					remainingCurrentGridDeficit -= (int) deficitToRemove - 10;
 				}
 				else if (sumOfDeviceUsage < (int) deficitToRemove) {
-
+					
+					// Skip devices with usages less than 10
+					int totalDevicesGreaterThanTen = 0;
+					
 					for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
-						devicesByPriority.get(k).get(l).setDeviceUsage(10);
+						
+						if (devicesByPriority.get(k).get(l).getDeviceUsage() >= 10) {
+							devicesByPriority.get(k).get(l).setDeviceUsage(10);
+						}
+						else {
+							totalDevicesGreaterThanTen++;
+						}
 					}
 					
-					remainingCurrentGridDeficit -= sumOfDeviceUsage - ((devicesByPriority.get(k).size()) * 10);
+					remainingCurrentGridDeficit -= sumOfDeviceUsage - (totalDevicesGreaterThanTen * 10);
 				}
 				else {
 					
@@ -154,9 +163,13 @@ public class ResponseFunction {
 							break;
 						}
 						else if (devicesByPriority.get(k).get(l).getDeviceUsage() < (int) deficitToRemove) {
-							remainingCurrentGridDeficit -= devicesByPriority.get(k).get(l).getDeviceUsage() - 10;
-							deficitToRemove -= devicesByPriority.get(k).get(l).getDeviceUsage();
-							devicesByPriority.get(k).get(l).setDeviceUsage(10);
+							
+							// Only decrease device usage from devices with device usage greater than or equal to 10
+							if (devicesByPriority.get(k).get(l).getDeviceUsage() >= 10) {
+								remainingCurrentGridDeficit -= devicesByPriority.get(k).get(l).getDeviceUsage() - 10;
+								deficitToRemove -= devicesByPriority.get(k).get(l).getDeviceUsage();
+								devicesByPriority.get(k).get(l).setDeviceUsage(10);
+							}
 						}
 						else {
 							devicesByPriority.get(k).get(l).setDeviceUsage(devicesByPriority.get(k).get(l).getDeviceUsage() - (int) deficitToRemove);
@@ -191,10 +204,10 @@ public class ResponseFunction {
 						break;
 					}
 					
-					int j = 0;
+					int j = devicesByPriority.get(i).size() - 1;
 					if (!devicesByPriority.get(i).isEmpty()) {
 						
-						while (j < devicesByPriority.get(i).size()) {
+						while (j >= 0) {
 							
 							if (devicesByPriority.get(i).get(j).getDeviceUsage() > 0) {
 								
@@ -209,7 +222,7 @@ public class ResponseFunction {
 								}
 							}
 							
-							j++;
+							j--;
 						}
 					}
 				}
@@ -464,4 +477,10 @@ public class ResponseFunction {
 		
 		return rp;
 	}
+	
+	// Communication with Control Interface Function
+//	public void sentToCF() {
+//		CF cf = new CF();
+//		cf.receiveResponsePackage(responsePackage());
+//	}
 }

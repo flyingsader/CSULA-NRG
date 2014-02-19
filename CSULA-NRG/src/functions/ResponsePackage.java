@@ -1,5 +1,6 @@
 package functions;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -11,6 +12,44 @@ public class ResponsePackage {
 	
 	public ResponsePackage(Statement stmt) {
 		this.stmt = stmt;
+	}
+	
+	// Power saver mode
+	protected void powerSave(Device device) {
+		
+		int deviceUsage = device.getDeviceUsage() / 2;
+		device.setDeviceUsage(deviceUsage);
+		
+		try {
+			stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + deviceUsage + " WHERE DeviceID = " + device.getDeviceID());
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// Register new device
+	protected void registerDevice(Device device) {
+		
+		try {
+			ResultSet rs = stmt.executeQuery("SELECT * FROM Devices WHERE DeviceID = " + device.getDeviceID());
+
+			boolean resultHasNext = rs.next();
+			if (resultHasNext) {
+				
+				int deviceID = rs.getInt("DeviceID");
+				
+				if (deviceID > 0) {
+					System.out.println("Device is already registered in the database.");
+				}
+				else {
+					stmt.executeUpdate(device.toSqlEntry());
+				}
+			}
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	// Send wireless signal

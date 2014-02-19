@@ -9,15 +9,15 @@ public class ResponseFunction {
 	
 	private Statement stmt;
 	private List<Device> devices; 
-	@SuppressWarnings("unused")
-	private List<GridData> gridData;
+	private int currentGridDeficit;
 	
-	public ResponseFunction(Statement stmt, List<Device> devices, List<GridData> gridData) {
+	public ResponseFunction(Statement stmt, List<Device> devices, int currentGridDeficit) {
 		this.stmt = stmt;
 		this.devices = devices;
-		this.gridData = gridData;
+		this.currentGridDeficit = currentGridDeficit;
 	}
 	
+	// Sort devices by priority level 0 to 9
 	protected List<Device> importanceSort() {
 		
 		List<Device> sortDevices = new ArrayList<Device>();
@@ -51,51 +51,237 @@ public class ResponseFunction {
 	}
 	
 	// Get an arbitrary device usage max. Rank devices by priority. Modify and share the device usage across all devices to meet max device usage.
-	protected List<Device> powerConsumption(double watts, List<Device> devices) {
+	protected List<Device> powerConsumption(List<Device> devices) {
 		
 		List<Device> adjustedDevices = devices;
+		
+		int totalDeviceUsage = 0;
+		
+		// Get total device usage of all devices
+		for (int i = 0; i < devices.size(); i++) {
+			totalDeviceUsage += devices.get(i).getDeviceUsage();
+		}
+		
+		// If the current grid deficit requires all devices to shutdown
+		if (currentGridDeficit == totalDeviceUsage) {
+			
+			try {
+				
+				for (int i = 0; i < adjustedDevices.size(); i++) {
+					
+					adjustedDevices.get(i).setDeviceUsage(0);
+					
+					// Update device usage in database
+					stmt.executeUpdate("UPDATE Devices SET DeviceUsage = 0 WHERE DeviceID = " + adjustedDevices.get(i).getDeviceID());
+				}
+			}
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			return adjustedDevices;
+		}
 		
 		// Get total number of priority levels with at least one device
 		int totalPriorities = totalPriority(adjustedDevices);
 		
 		// Calculate the device usage percentage for each priority level
 		int[] distribution = distribution(totalPriorities);
-
+		
+		// All devices group by priority level
+		List<List<Device>> devicesByPriority = devicesByPriority(devices);
+		
 		try {
 
-			int k = 0;
+			int remainingCurrentGridDeficit = currentGridDeficit;
+			
+			// Get the number of devices in each priority level
 			int[] totalPrioritiesDevices = numOfDevicesWithPriority(adjustedDevices);
+			int k = totalPrioritiesDevices.length - 1;
 			int numOfDevices = totalPrioritiesDevices[k];
-			int count = 0;
-			for (int i = 0, j = 0; i < adjustedDevices.size(); i++) {
+//			int count = 0;
+			
+			
+			for (int i = 0/*, j = 0*/; i < distribution.length; i++) {
+				
+				// Deficit to remove for the current priority level
+				double deficitToRemove = (double) currentGridDeficit * (double) distribution[i] * 0.01;
+
+				if (k >= 0) {
+					numOfDevices = totalPrioritiesDevices[k];
+				}
+				else {
+					break;
+				}
 				
 				// Skip priority levels that has no devices
 				while (numOfDevices == 0) {
-					k++;
+					k--;
 					numOfDevices = totalPrioritiesDevices[k];
 				}
 				
-				// Calculate the device usage and distribute evenly if there are more than one device with the same priority level.
-				double deviceUsage = watts * (double) distribution[j] * 0.01;
-				deviceUsage /= (double) numOfDevices;
-				adjustedDevices.get(i).setDeviceUsage((int) deviceUsage);
-
-				// Update device usage in database
-				stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + (int) deviceUsage + " WHERE DeviceID = " + adjustedDevices.get(i).getDeviceID());
+				int sumOfDeviceUsage = 0;
 				
-				count++;
-				if (count == numOfDevices) {
-					j++;
-					count = 0;
-					k++;
-					if (k < totalPrioritiesDevices.length) {
-						numOfDevices = totalPrioritiesDevices[k];
+				// Get the sum of all devices' usage for the particular priority level
+				for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
+					sumOfDeviceUsage += devicesByPriority.get(k).get(l).getDeviceUsage();
+				}
+				
+				// Decrease the deficit by decreasing the devices' usages to a minimum of 10 to keep all devices on
+				if (sumOfDeviceUsage == (int) deficitToRemove) {
+					
+					for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
+						devicesByPriority.get(k).get(l).setDeviceUsage(10);
 					}
-					else {
+					
+					remainingCurrentGridDeficit -= (int) deficitToRemove - 10;
+				}
+				else if (sumOfDeviceUsage < (int) deficitToRemove) {
+
+					for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
+						devicesByPriority.get(k).get(l).setDeviceUsage(10);
+					}
+					
+					remainingCurrentGridDeficit -= sumOfDeviceUsage - ((devicesByPriority.get(k).size()) * 10);
+				}
+				else {
+					
+					for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
+						
+						if (devicesByPriority.get(k).get(l).getDeviceUsage() == (int) deficitToRemove) {
+							devicesByPriority.get(k).get(l).setDeviceUsage(10);
+							remainingCurrentGridDeficit -= (int) deficitToRemove - 10;
+							break;
+						}
+						else if (devicesByPriority.get(k).get(l).getDeviceUsage() < (int) deficitToRemove) {
+							remainingCurrentGridDeficit -= devicesByPriority.get(k).get(l).getDeviceUsage() - 10;
+							deficitToRemove -= devicesByPriority.get(k).get(l).getDeviceUsage();
+							devicesByPriority.get(k).get(l).setDeviceUsage(10);
+						}
+						else {
+							devicesByPriority.get(k).get(l).setDeviceUsage(devicesByPriority.get(k).get(l).getDeviceUsage() - (int) deficitToRemove);
+							remainingCurrentGridDeficit -= (int) deficitToRemove;
+							break;
+						}
+					}
+				}
+				
+				k--;
+				
+//				count++;
+//				if (count == numOfDevices) {
+//					//j++;
+//					count = 0;
+//					k++;
+//					if (k < totalPrioritiesDevices.length) {
+//						numOfDevices = totalPrioritiesDevices[k];
+//					}
+//					else {
+//						break;
+//					}
+//				}
+			}
+			
+			// If there is still remaining current grid deficit, decrease the deficit. Some devices will have to shutdown (device's usage is 0)
+			if (remainingCurrentGridDeficit > 0) {
+				
+				for (int i = devicesByPriority.size() - 1; i >= 0; i--) {
+					
+					if (remainingCurrentGridDeficit == 0) {
 						break;
+					}
+					
+					int j = 0;
+					if (!devicesByPriority.get(i).isEmpty()) {
+						
+						while (j < devicesByPriority.get(i).size()) {
+							
+							if (devicesByPriority.get(i).get(j).getDeviceUsage() > 0) {
+								
+								// Decrease the deficit
+								if (devicesByPriority.get(i).get(j).getDeviceUsage() >= remainingCurrentGridDeficit) {
+									devicesByPriority.get(i).get(j).setDeviceUsage(devicesByPriority.get(i).get(j).getDeviceUsage() - remainingCurrentGridDeficit);
+									remainingCurrentGridDeficit = 0;
+								}
+								else {
+									remainingCurrentGridDeficit -= devicesByPriority.get(i).get(j).getDeviceUsage();
+									devicesByPriority.get(i).get(j).setDeviceUsage(0);
+								}
+							}
+							
+							j++;
+						}
 					}
 				}
 			}
+			
+			// Add the newly updated devices into a new array list
+			List<Device> modifiedDevices = new ArrayList<Device>();
+			for (int i = 0; i < devicesByPriority.size(); i++) {
+				
+				int j = 0;
+				if (!devicesByPriority.get(i).isEmpty()) {
+					
+					while (j < devicesByPriority.get(i).size()) {
+						
+						modifiedDevices.add(devicesByPriority.get(i).get(j));
+						j++;
+					}
+				}
+			}
+			
+			// Update device usage in database
+			for (int i = 0; i < modifiedDevices.size(); i++) {
+				
+				int deviceUsage = modifiedDevices.get(i).getDeviceUsage();
+				
+				stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + deviceUsage + " WHERE DeviceID = " + modifiedDevices.get(i).getDeviceID());
+			}
+			
+			// Replace the old devices' usage with the new values from the new array list
+			adjustedDevices = modifiedDevices;
+			
+//			for (int i = 0, j = 0; i < adjustedDevices.size(); i++) {
+//				
+//				// Skip priority levels that has no devices
+//				while (numOfDevices == 0) {
+//					k++;
+//					numOfDevices = totalPrioritiesDevices[k];
+//				}
+//				
+//				// Calculate the device usage and distribute evenly if there are more than one device with the same priority level.
+//				double deficitToRemove = (double) currentGridDeficit * (double) distribution[j] * 0.01;
+//				
+//				double deficitDifference = adjustedDevices.get(i).getDeviceUsage() - deficitToRemove;
+//				
+//				// If a device used less than the deficitToRemove
+//				if (deficitDifference < 0) {
+//					remainingCurrentGridDeficit -= adjustedDevices.get(i).getDeviceUsage();
+//				}
+				
+				
+				
+				
+//				double deviceUsage = watts * (double) distribution[j] * 0.01;
+//				deviceUsage /= (double) numOfDevices;
+//				adjustedDevices.get(i).setDeviceUsage((int) deviceUsage);
+//
+//				// Update device usage in database
+//				stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + (int)  deviceUsage + " WHERE DeviceID = " + adjustedDevices.get(i).getDeviceID());
+//				
+//				count++;
+//				if (count == numOfDevices) {
+//					j++;
+//					count = 0;
+//					k++;
+//					if (k < totalPrioritiesDevices.length) {
+//						numOfDevices = totalPrioritiesDevices[k];
+//					}
+//					else {
+//						break;
+//					}
+//				}
+//			}
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -138,7 +324,7 @@ public class ResponseFunction {
 			}
 		}
 		
-		System.out.println("Priorities total: " + totalPriorities);
+		//System.out.println("Priorities total: " + totalPriorities);
 		
 		return totalPriorities;
 	}
@@ -238,30 +424,44 @@ public class ResponseFunction {
 		return distribution;
 	}
 	
-	// Dummy method to send wireless signal
-	protected void sentWirelessSignal() {
+	// All devices group by priority level
+	protected List<List<Device>> devicesByPriority(List<Device> devices) {
 		
+		List<List<Device>> devicesByPriority = new ArrayList<List<Device>>();
+		
+		// Create totalPriorities of array lists
+//		for (int i = 0; i < totalPriorities; i++) {
+//			List<Device> device = new ArrayList<Device>();
+//			devicesByPriority.add(device);
+//		}
+		
+		for (int i = 0; i < 10; i++) {
+			List<Device> device = new ArrayList<Device>();
+			devicesByPriority.add(device);
+		}
+		
+		// Add devices to the array list with priority level labeled
+		for (int i = 0, j = 0; i < devices.size();) {
+			if (devices.get(i).getPriority() == j) {
+//				List<Device> device = new ArrayList<Device>();
+//				device.add(devices.get(i));
+//				devicesByPriority.add(j, device);
+				devicesByPriority.get(j).add(devices.get(i));
+				i++;
+			}
+			else if (devices.get(i).getPriority() > j) {
+				j++;
+			}
+		}
+		
+		return devicesByPriority;
 	}
 	
-	// Turn on devices
-	protected void turnOn(Device device, int deviceUsage) {
-		device.setDeviceUsage(deviceUsage);
-		try {
-			stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + deviceUsage + " WHERE DeviceID = " + device.getDeviceID());
-		} 
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	// Turn off devices
-	protected void turnOff(Device device) {
-		device.setDeviceUsage(0);
-		try {
-			stmt.executeUpdate("UPDATE Devices SET DeviceUsage = 0 WHERE DeviceID = " + device.getDeviceID());
-		} 
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
+	// Receive response packages from devices
+	protected ResponsePackage responsePackage() {
+		
+		ResponsePackage rp = new ResponsePackage(stmt);
+		
+		return rp;
 	}
 }

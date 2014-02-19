@@ -9,17 +9,19 @@ public class DevicesTable extends JFrame {
 
 		private JButton limitButton = new JButton("Limit Power");
 		private JPanel jp = new JPanel();
-		private JLabel watts;
+		private JLabel currentDeficit;
+		private JLabel totalDeviceUsageLabel;
 		private JLabel priorities;
 		private int totalRecords;
-		private double availableWatts;
+		private int remainingCurrentDeficit;
+		private int totalDeviceUsage;
 		private int prioritiesLevels;
 		private boolean clicked = false;
 		
-		public DevicesTable(Statement stmt, int totalRecords, double availableWatts, int prioritiesLevels) {
+		public DevicesTable(Statement stmt, int totalRecords, int remainingCurrentDeficit, int prioritiesLevels) {
 			
 			this.totalRecords = totalRecords;
-			this.availableWatts = availableWatts;
+			this.remainingCurrentDeficit = remainingCurrentDeficit;
 			this.prioritiesLevels = prioritiesLevels;
 			
 			setLayout(new BorderLayout());
@@ -55,7 +57,7 @@ public class DevicesTable extends JFrame {
 				sql.printStackTrace();
 			}
 			
-			watts = new JLabel("Available watts: " + availableWatts);
+			currentDeficit = new JLabel("Remaining Current Deficit: " + remainingCurrentDeficit);
 			priorities = new JLabel("Total different priority levels: " + prioritiesLevels);
 			
 			JScrollPane scrollPane = new JScrollPane(devicesData);
@@ -67,16 +69,17 @@ public class DevicesTable extends JFrame {
 			setVisible(true);
 			setExtendedState(MAXIMIZED_BOTH);
 			
-			jp.add(watts);
+			jp.add(currentDeficit);
 			jp.add(priorities);
 			add(BorderLayout.NORTH, jp);
 			add(BorderLayout.CENTER, scrollPane);
 		}
 		
-		public DevicesTable(Statement stmt, int totalRecords, int prioritiesLevels) {
+		public DevicesTable(Statement stmt, int totalRecords, int prioritiesLevels, int totalDeviceUsage, int thisWindow) {
 			
 			this.totalRecords = totalRecords;
 			this.prioritiesLevels = prioritiesLevels;
+			this.totalDeviceUsage = totalDeviceUsage;
 			
 			setLayout(new BorderLayout());
 			
@@ -112,6 +115,9 @@ public class DevicesTable extends JFrame {
 			}
 			
 			priorities = new JLabel("Total different priority levels: " + prioritiesLevels);
+			//priorities.setHorizontalAlignment(SwingConstants.CENTER);
+			
+			totalDeviceUsageLabel = new JLabel("Total Device Usage: " + totalDeviceUsage);
 			
 			JScrollPane scrollPane = new JScrollPane(devicesData);
 			
@@ -126,7 +132,8 @@ public class DevicesTable extends JFrame {
 			setExtendedState(MAXIMIZED_BOTH);
 			
 			jp.add(priorities);
-			add(BorderLayout.NORTH, priorities);
+			jp.add(totalDeviceUsageLabel);
+			add(BorderLayout.NORTH, jp);
 			add(BorderLayout.CENTER, scrollPane);
 			add(BorderLayout.SOUTH, limitButton);
 		}
@@ -142,7 +149,7 @@ public class DevicesTable extends JFrame {
 			
 			// Exit the window
 			public void actionPerformed(ActionEvent e) {
-				setVisible(false);
+				//setVisible(false);
 				clicked = true;
 			}
 		}

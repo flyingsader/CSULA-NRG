@@ -481,6 +481,19 @@ public class ResponseFunction {
 		return devicesByPriority;
 	}
 	
+	// Adjust ranking of a device based on weather data
+	protected List<Device> adjustRanking(List<Device> devices) {
+		
+		// Retrieve weather data and adjust each device's ranking
+		for (int i = 0; i < devices.size(); i++) {
+			
+			// Analyze weather data and set device priority
+//			devices.get(i).setPriority(// Determine a value);
+		}
+		
+		return devices;
+	}
+	
 	// Receive response packages from devices
 	protected ResponsePackage responsePackage() {
 		

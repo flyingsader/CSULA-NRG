@@ -1,10 +1,8 @@
 package functions;
 
 import java.io.*;
-import java.net.URL;
 import java.sql.*;
 import java.util.*;
-import java.util.logging.Level;
 
 import types.*;
 

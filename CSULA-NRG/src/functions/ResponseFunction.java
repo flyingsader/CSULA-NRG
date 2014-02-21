@@ -130,11 +130,18 @@ public class ResponseFunction {
 				// Decrease the deficit by decreasing the devices' usages to a minimum of 10 to keep all devices on
 				if (sumOfDeviceUsage == (int) deficitToRemove) {
 					
+					// Skip devices with usages less than 10
+					int totalDevicesGreaterThanTen = 0;
+					
 					for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
-						devicesByPriority.get(k).get(l).setDeviceUsage(10);
+						
+						if (devicesByPriority.get(k).get(l).getDeviceUsage() >= 10) {
+							devicesByPriority.get(k).get(l).setDeviceUsage(10);
+							totalDevicesGreaterThanTen++;
+						}
 					}
 					
-					remainingCurrentGridDeficit -= (int) deficitToRemove - 10;
+					remainingCurrentGridDeficit -= (int) deficitToRemove - (totalDevicesGreaterThanTen * 10);
 				}
 				else if (sumOfDeviceUsage < (int) deficitToRemove) {
 					
@@ -145,8 +152,6 @@ public class ResponseFunction {
 						
 						if (devicesByPriority.get(k).get(l).getDeviceUsage() >= 10) {
 							devicesByPriority.get(k).get(l).setDeviceUsage(10);
-						}
-						else {
 							totalDevicesGreaterThanTen++;
 						}
 					}
@@ -483,4 +488,5 @@ public class ResponseFunction {
 //		CF cf = new CF();
 //		cf.receiveResponsePackage(responsePackage());
 //	}
+	
 }

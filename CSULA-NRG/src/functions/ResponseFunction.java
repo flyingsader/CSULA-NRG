@@ -2,7 +2,6 @@ package functions;
 
 import java.sql.*;
 import java.util.*;
-
 import types.*;
 
 public class ResponseFunction {
@@ -139,6 +138,9 @@ public class ResponseFunction {
 							devicesByPriority.get(k).get(l).setDeviceUsage(10);
 							totalDevicesGreaterThanTen++;
 						}
+						else {
+							deficitToRemove -= devicesByPriority.get(k).get(l).getDeviceUsage();
+						}
 					}
 					
 					remainingCurrentGridDeficit -= (int) deficitToRemove - (totalDevicesGreaterThanTen * 10);
@@ -153,6 +155,9 @@ public class ResponseFunction {
 						if (devicesByPriority.get(k).get(l).getDeviceUsage() >= 10) {
 							devicesByPriority.get(k).get(l).setDeviceUsage(10);
 							totalDevicesGreaterThanTen++;
+						}
+						else {
+							sumOfDeviceUsage -= devicesByPriority.get(k).get(l).getDeviceUsage();
 						}
 					}
 					
@@ -175,6 +180,7 @@ public class ResponseFunction {
 								deficitToRemove -= devicesByPriority.get(k).get(l).getDeviceUsage();
 								devicesByPriority.get(k).get(l).setDeviceUsage(10);
 							}
+							
 						}
 						else {
 							devicesByPriority.get(k).get(l).setDeviceUsage(devicesByPriority.get(k).get(l).getDeviceUsage() - (int) deficitToRemove);

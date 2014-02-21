@@ -28,12 +28,14 @@ public class DevicesTable extends JFrame {
 			
 			JTable devicesData = new JTable();
 			
-			String[] columnLabels = {"DeviceID", "DeviceDesc", "DeviceOwner", "DeviceUsage", "Priority"};
+			String[] columnLabels = {"DeviceID", "DeviceUsage", "Priority"};
+			//String[] columnLabels = {"DeviceID", "DeviceDesc", "DeviceOwner", "DeviceUsage", "Priority"};
 			
 			try {  
 				
 				// Create a row-column string array to store the record
-				String[][] records = new String[totalRecords][5];
+				String[][] records = new String[totalRecords][3];
+				//String[][] records = new String[totalRecords][5];
 				
 				// Store the record in the row-column string array
 				ResultSet printResults = stmt.executeQuery("SELECT * FROM Devices Order By Priority");
@@ -41,10 +43,10 @@ public class DevicesTable extends JFrame {
 				for (int i = 0; i < records.length; i++) {
 					if (printResults.next()) {
 						records[i][0] = printResults.getString("DeviceID");
-						records[i][1] = printResults.getString("DeviceDESC");
-						records[i][2] = printResults.getString("DeviceOwner");
-						records[i][3] = printResults.getString("DeviceUsage");
-						records[i][4] = printResults.getString("Priority");
+//						records[i][1] = printResults.getString("DeviceDESC");
+//						records[i][2] = printResults.getString("DeviceOwner");
+						records[i][1] = printResults.getString("DeviceUsage");
+						records[i][2] = printResults.getString("Priority");
 					}
 				}
 				
@@ -85,12 +87,14 @@ public class DevicesTable extends JFrame {
 			
 			JTable devicesData = new JTable();
 			
-			String[] columnLabels = {"DeviceID", "DeviceDesc", "DeviceOwner", "DeviceUsage", "Priority"};
+			String[] columnLabels = {"DeviceID", "DeviceUsage", "Priority"};
+			//String[] columnLabels = {"DeviceID", "DeviceDesc", "DeviceOwner", "DeviceUsage", "Priority"};
 			
 			try {  
 				
 				// Create a row-column string array to store the record
-				String[][] records = new String[totalRecords][5];
+				String[][] records = new String[totalRecords][3];
+				//String[][] records = new String[totalRecords][5];
 				
 				// Store the record in the row-column string array
 				ResultSet printResults = stmt.executeQuery("SELECT * FROM Devices Order By Priority");
@@ -98,10 +102,10 @@ public class DevicesTable extends JFrame {
 				for (int i = 0; i < records.length; i++) {
 					if (printResults.next()) {
 						records[i][0] = printResults.getString("DeviceID");
-						records[i][1] = printResults.getString("DeviceDESC");
-						records[i][2] = printResults.getString("DeviceOwner");
-						records[i][3] = printResults.getString("DeviceUsage");
-						records[i][4] = printResults.getString("Priority");
+//						records[i][1] = printResults.getString("DeviceDESC");
+//						records[i][2] = printResults.getString("DeviceOwner");
+						records[i][1] = printResults.getString("DeviceUsage");
+						records[i][2] = printResults.getString("Priority");
 					}
 				}
 				

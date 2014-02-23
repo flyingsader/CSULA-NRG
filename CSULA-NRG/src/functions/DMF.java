@@ -23,10 +23,9 @@ public class DMF{
 	private int currentGridDeficit;
 	
 	DMF() throws SQLException{
-		String url = "jdbc:mysql://localhost:3306/Classic Laura";
+		String url = "jdbc:mysql://localhost:3306/NRG";
 		String username = "root";
-		String password = "Classic Laura";
-		Connection connection = null;
+		String password = "4042951";
 		connection = DriverManager.getConnection(url, username, password);
 	}
 	
@@ -40,32 +39,59 @@ public class DMF{
 		int cols = rsmd.getColumnCount();		
 		
 		List<WeatherData> resultData = new ArrayList<WeatherData>();
-		
+		rs.next();
 		while(!rs.isAfterLast()){
-			resultData.add(new WeatherData(rs.getString(0), rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getInt(4), rs.getInt(5)));
+			
+			resultData.add(new WeatherData(rs.getString(1), rs.getString(2), rs.getInt(3), rs.getInt(4), rs.getInt(5), rs.getInt(6)));
 			rs.next();
 		}
 
 		return resultData;
 	}
 	
-	public List<GridData> getAllGridData(){
+	public List<GridData> getAllGridData() throws SQLException{
 		//Retrieves all grid data
 		
 		String tmp = "Select * from GridData";
-		return null;
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(tmp);
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int cols = rsmd.getColumnCount();		
+		
+		List<GridData> resultData = new ArrayList<GridData>();
+		rs.next();
+		while(!rs.isAfterLast()){
+			
+			resultData.add(new GridData(rs.getString(1), rs.getString(2), rs.getInt(3), rs.getInt(4)));
+			rs.next();
+		}
+
+		return resultData;
 	}
 	
-	public List<Device> getAllDevices(){
+	public List<Device> getAllDevices() throws SQLException{
 		//Retrieves all devices
 		
-		String tmp = "Select * from DeviceData";
-		return null;
+		String tmp = "Select * from Devices";
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(tmp);
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int cols = rsmd.getColumnCount();		
+		
+		List<Device> resultData = new ArrayList<Device>();
+		rs.next();
+		while(!rs.isAfterLast()){
+			
+			resultData.add(new Device(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4), rs.getInt(5)));
+			rs.next();
+		}
+
+		return resultData;
 	}
 	
 	//public List<DeviceData>(String deviceKey){}
 	
-	public int modifyDevice(Device device){
+	public int modifyDevice(Device device) throws SQLException{
 		//Modifies a device entry
 
 		String tmp = "Delete from Devices where DeviceID = " + device.getDeviceID();
@@ -76,10 +102,16 @@ public class DMF{
 						device.getDeviceUsage() + ", " + 
 						device.getPriority() + ");";
 		
+		System.out.println(tmp);
+		Statement stmt;
+		stmt = connection.createStatement();
+		stmt.execute(tmp);
+		stmt.execute(tmp2);
+		
 		return 0;
 	}
 	
-	public int insertWeatherData(WeatherData data){
+	public int insertWeatherData(WeatherData data) throws SQLException{
 		
 		String tmp = "Insert into WeatherData values(" +
 				data.getLocality() + ", " + 
@@ -89,19 +121,29 @@ public class DMF{
 				data.getWindDir() + ", " + 
 				data.getSolarRad() + ");";
 		
+		System.out.println(tmp);
+		Statement stmt;
+		stmt = connection.createStatement();
+		stmt.execute(tmp);
+		
 		return 0;
 		//Adds a weather data object to the DB
 	}
 	
-	public int insertGridData(GridData data){
+	public int insertGridData(GridData data) throws SQLException{
 		//Adds a grid data object to the DB
 		
-		String tmp = "Insert into GridData values(" +
-				data.getLocality() + ", " + 
-				data.getTimestamp() + ", " + 
+		String tmp = "Insert into GridData values(\"" +
+				data.getLocality() + "\", \"" + 
+				data.getTimestamp() + "\", " + 
 				data.getCapacity() + ", " + 
 				data.getDemand() + ");";
 		
+		System.out.println(tmp);
+		Statement stmt;
+		stmt = connection.createStatement();
+		stmt.execute(tmp);
+
 		return 0;
 	}
 	
@@ -144,5 +186,41 @@ public class DMF{
 	
 	public void setDeficit(int deficit){
 		currentGridDeficit = deficit;
+	}
+	
+	public static void main(String[] args){
+		System.out.println("test");
+		
+		
+		try {
+			DMF dmf = new DMF();
+			
+			GridData gdata = new GridData(10, 6);
+
+			//dmf.insertGridData(gdata);
+			
+			
+			List<WeatherData> testList = dmf.getAllWeatherData();
+			
+			for(WeatherData data: testList){
+				System.out.println(data.toSqlEntry());
+			}
+			
+			List<GridData> test2List = dmf.getAllGridData();
+			
+			for(GridData data: test2List){
+				System.out.println(data.toSqlEntry());
+			}
+			
+			List<Device> test3List = dmf.getAllDevices();
+			
+			for(Device data: test3List){
+				System.out.println(data.toSqlEntry());
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

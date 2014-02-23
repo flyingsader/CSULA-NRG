@@ -15,7 +15,13 @@ public class Device {
 		this.priority = (int)(Math.random() * 10);
 	}
 	
-	
+	public Device(int ID, String desc, String owner, int usage, int prio){
+		this.deviceID = ID;
+		this.deviceDesc = desc;
+		this.deviceOwner = owner;
+		this.deviceUsage = usage;
+		this.priority = prio;
+	}
 	
 	public int getDeviceID() {
 		return deviceID;

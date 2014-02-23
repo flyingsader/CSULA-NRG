@@ -24,6 +24,13 @@ public class GridData {
 		this.capacity = (int)(Math.random() * 5000 + 47500);
 	}
 	
+	public GridData(String loc, String time, int cap, int dem){
+		locality = loc;
+		timestamp = time;
+		capacity = cap;
+		demand = dem;
+	}
+	
 	public String getLocality() {
 		return locality;
 	}

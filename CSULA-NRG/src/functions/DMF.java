@@ -25,7 +25,7 @@ public class DMF{
 	DMF(){
 		String url = "jdbc:mysql://localhost:3306/NRG";
 		String username = "root";
-		String password = "4042951";
+		String password = "qwerty";
 		try {
 			connection = DriverManager.getConnection(url, username, password);
 		} catch (SQLException e) {

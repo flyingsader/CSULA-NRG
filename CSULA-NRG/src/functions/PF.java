@@ -40,19 +40,27 @@ public class PF {
 			// request data to analyze from DMF
 			List<WeatherData> wData = _dmf.getAllWeatherData();
 			List<GridData> gData = _dmf.getAllGridData();
-			GridData prediction = null;
-
+			
 			// map weather and grid data by timestamp
 			HashMap<WeatherData, GridData> map = mapData(wData, gData);
 
 			// grab past years of days to detect pattern
 			HashMap<WeatherData, GridData> pastYears = getPastYears(map);
-			
-			Entry<WeatherData, GridData> latest = getLatestWeather(map);
+
+			// calculate average of grid demand for past years
+			int totalDemand = 0;
+			int totalCap = 0;
+			for(GridData gd: pastYears.values())
+			{
+				totalDemand += gd.getDemand();
+				totalCap += gd.getCapacity();
+			}
+
+			double avgCap = totalCap / pastYears.size();
+			double avgDemand = totalDemand / pastYears.size();
 			// send expected grid data to DMF
-			
-			_dmf.setDeficit((int) (prediction.getCapacity() - (prediction
-					.getDemand() * 1.01)));
+
+			_dmf.setDeficit((int) (avgCap - (avgDemand * 1.01)));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
@@ -62,13 +70,28 @@ public class PF {
 
 	private Entry<WeatherData, GridData> getLatestWeather(
 			HashMap<WeatherData, GridData> map) {
-		Entry<WeatherData,GridData> entry = (Entry<WeatherData, GridData>) map.entrySet().toArray()[0];
-		
-		for(Entry<WeatherData,GridData> wg: map.entrySet())
-		{
-			
+
+		Entry<WeatherData, GridData> entry = (Entry<WeatherData, GridData>) map
+				.entrySet().toArray()[0];
+
+		try {
+			Date mostRecent = new SimpleDateFormat(WeatherData.TimestampFormat)
+					.parse(entry.getKey().getTimestamp());
+
+			for (Entry<WeatherData, GridData> wg : map.entrySet()) {
+				Date ts = new SimpleDateFormat(WeatherData.TimestampFormat)
+						.parse(wg.getKey().getTimestamp());
+				
+				if(ts.after(mostRecent))
+				{
+					entry = wg;
+					mostRecent = ts;
+				}
+			}
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
 		return entry;
 	}
 
@@ -91,10 +114,11 @@ public class PF {
 	private boolean isInsideDemandThreshold(int demand, GridData value) {
 		boolean insideThreshold = false;
 		int demandThreshold = 10;
-		
-		if(demand + demandThreshold > value.getDemand() && demand - demandThreshold < value.getDemand())
+
+		if (demand + demandThreshold > value.getDemand()
+				&& demand - demandThreshold < value.getDemand())
 			insideThreshold = true;
-		
+
 		return insideThreshold;
 	}
 
@@ -105,7 +129,7 @@ public class PF {
 
 		for (WeatherData w : map.keySet()) {
 			String target = w.getTimestamp();
-			DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SS",
+			DateFormat df = new SimpleDateFormat(WeatherData.TimestampFormat,
 					Locale.ENGLISH);
 			Date result = df.parse(target);
 			Calendar tomorrow = Calendar.getInstance();

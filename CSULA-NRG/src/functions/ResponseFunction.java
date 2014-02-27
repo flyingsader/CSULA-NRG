@@ -2,51 +2,51 @@ package functions;
 
 import java.sql.*;
 import java.util.*;
+
 import types.*;
 
 public class ResponseFunction {
 	
 	private Statement stmt;
-	private List<Device> devices; 
+	private List<Device> updatedDevices;
+	private List<Device> originalDevices;
 	private int currentGridDeficit;
+	private DMF dmf;
 	
-	public ResponseFunction(Statement stmt, List<Device> devices, int currentGridDeficit) {
+	public ResponseFunction(Statement stmt, List<Device> updatedDevices, List<Device> originalDevices, int currentGridDeficit, DMF dmf) {
 		this.stmt = stmt;
-		this.devices = devices;
+		this.updatedDevices = updatedDevices;
+		this.originalDevices = originalDevices;
 		this.currentGridDeficit = currentGridDeficit;
+		this.dmf = dmf;
 	}
 	
 	// Sort devices by priority level 0 to 9
-	protected List<Device> importanceSort() {
+	protected List<Device> importanceSort(List<Device> devices) {
 		
 		List<Device> sortDevices = new ArrayList<Device>();
 		
-		try {
-			
-			ResultSet rs = stmt.executeQuery("SELECT * FROM Devices ORDER BY Priority");
-			
-			boolean resultHasNext = rs.next();
-			while (resultHasNext) {
-				
-				int deviceID = rs.getInt("DeviceID");
-				
-				for (int i = 0; i < devices.size(); i++) {
-					if (devices.get(i).getDeviceID() == deviceID) {
-						sortDevices.add(devices.get(i));
-						break;
-					}
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < devices.size(); j++) {
+				if (devices.get(j).getPriority() == i) {
+					sortDevices.add(devices.get(j));
 				}
-				
-				resultHasNext = rs.next();
 			}
-			
-			return sortDevices;
-		} 
-		catch (SQLException e) {
-			e.printStackTrace();
 		}
 		
-		return null;
+		return sortDevices;
+	}
+	
+	// When updating devices, remove and add the devices back to the database
+	protected void keepOrder(List<Device> devices) {
+		
+		for (int i = 0; i < devices.size(); i++) {
+			try {
+				dmf.modifyDevice(devices.get(i));
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	// Get an arbitrary device usage max. Rank devices by priority. Modify and share the device usage across all devices to meet max device usage.
@@ -63,19 +63,14 @@ public class ResponseFunction {
 		
 		// If the current grid deficit requires all devices to shutdown
 		if (currentGridDeficit == totalDeviceUsage) {
-			
-			try {
 				
-				for (int i = 0; i < adjustedDevices.size(); i++) {
+			for (int i = 0; i < adjustedDevices.size(); i++) {
 					
-					adjustedDevices.get(i).setDeviceUsage(0);
+				adjustedDevices.get(i).setDeviceUsage(0);
 					
-					// Update device usage in database
-					stmt.executeUpdate("UPDATE Devices SET DeviceUsage = 0 WHERE DeviceID = " + adjustedDevices.get(i).getDeviceID());
-				}
-			}
-			catch (SQLException e) {
-				e.printStackTrace();
+				// Update device usage in database
+					
+				keepOrder(adjustedDevices);
 			}
 			
 			return adjustedDevices;
@@ -98,10 +93,8 @@ public class ResponseFunction {
 			int[] totalPrioritiesDevices = numOfDevicesWithPriority(adjustedDevices);
 			int k = totalPrioritiesDevices.length - 1;
 			int numOfDevices = totalPrioritiesDevices[k];
-//			int count = 0;
 			
-			
-			for (int i = 0/*, j = 0*/; i < distribution.length; i++) {
+			for (int i = 0; i < distribution.length; i++) {
 				
 				// Deficit to remove for the current priority level
 				double deficitToRemove = (double) currentGridDeficit * (double) distribution[i] * 0.01;
@@ -135,6 +128,7 @@ public class ResponseFunction {
 					for (int l = devicesByPriority.get(k).size() - 1; l >= 0; l--) {
 						
 						if (devicesByPriority.get(k).get(l).getDeviceUsage() >= 10) {
+							
 							devicesByPriority.get(k).get(l).setDeviceUsage(10);
 							totalDevicesGreaterThanTen++;
 						}
@@ -191,19 +185,6 @@ public class ResponseFunction {
 				}
 				
 				k--;
-				
-//				count++;
-//				if (count == numOfDevices) {
-//					//j++;
-//					count = 0;
-//					k++;
-//					if (k < totalPrioritiesDevices.length) {
-//						numOfDevices = totalPrioritiesDevices[k];
-//					}
-//					else {
-//						break;
-//					}
-//				}
 			}
 			
 			// If there is still remaining current grid deficit, decrease the deficit. Some devices will have to shutdown (device's usage is 0)
@@ -256,61 +237,17 @@ public class ResponseFunction {
 			
 			// Update device usage in database
 			for (int i = 0; i < modifiedDevices.size(); i++) {
-				
-				int deviceUsage = modifiedDevices.get(i).getDeviceUsage();
-				
-				stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + deviceUsage + " WHERE DeviceID = " + modifiedDevices.get(i).getDeviceID());
+				dmf.modifyDevice(modifiedDevices.get(i));
 			}
 			
 			// Replace the old devices' usage with the new values from the new array list
 			adjustedDevices = modifiedDevices;
-			
-//			for (int i = 0, j = 0; i < adjustedDevices.size(); i++) {
-//				
-//				// Skip priority levels that has no devices
-//				while (numOfDevices == 0) {
-//					k++;
-//					numOfDevices = totalPrioritiesDevices[k];
-//				}
-//				
-//				// Calculate the device usage and distribute evenly if there are more than one device with the same priority level.
-//				double deficitToRemove = (double) currentGridDeficit * (double) distribution[j] * 0.01;
-//				
-//				double deficitDifference = adjustedDevices.get(i).getDeviceUsage() - deficitToRemove;
-//				
-//				// If a device used less than the deficitToRemove
-//				if (deficitDifference < 0) {
-//					remainingCurrentGridDeficit -= adjustedDevices.get(i).getDeviceUsage();
-//				}
-				
-				
-				
-				
-//				double deviceUsage = watts * (double) distribution[j] * 0.01;
-//				deviceUsage /= (double) numOfDevices;
-//				adjustedDevices.get(i).setDeviceUsage((int) deviceUsage);
-//
-//				// Update device usage in database
-//				stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + (int)  deviceUsage + " WHERE DeviceID = " + adjustedDevices.get(i).getDeviceID());
-//				
-//				count++;
-//				if (count == numOfDevices) {
-//					j++;
-//					count = 0;
-//					k++;
-//					if (k < totalPrioritiesDevices.length) {
-//						numOfDevices = totalPrioritiesDevices[k];
-//					}
-//					else {
-//						break;
-//					}
-//				}
-//			}
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
+		updatedDevices = adjustedDevices;
 		return adjustedDevices;
 	}
 	
@@ -347,8 +284,6 @@ public class ResponseFunction {
 				totalPriorities++;
 			}
 		}
-		
-		//System.out.println("Priorities total: " + totalPriorities);
 		
 		return totalPriorities;
 	}
@@ -453,12 +388,6 @@ public class ResponseFunction {
 		
 		List<List<Device>> devicesByPriority = new ArrayList<List<Device>>();
 		
-		// Create totalPriorities of array lists
-//		for (int i = 0; i < totalPriorities; i++) {
-//			List<Device> device = new ArrayList<Device>();
-//			devicesByPriority.add(device);
-//		}
-		
 		for (int i = 0; i < 10; i++) {
 			List<Device> device = new ArrayList<Device>();
 			devicesByPriority.add(device);
@@ -467,9 +396,6 @@ public class ResponseFunction {
 		// Add devices to the array list with priority level labeled
 		for (int i = 0, j = 0; i < devices.size();) {
 			if (devices.get(i).getPriority() == j) {
-//				List<Device> device = new ArrayList<Device>();
-//				device.add(devices.get(i));
-//				devicesByPriority.add(j, device);
 				devicesByPriority.get(j).add(devices.get(i));
 				i++;
 			}
@@ -497,7 +423,8 @@ public class ResponseFunction {
 	// Receive response packages from devices
 	protected ResponsePackage responsePackage() {
 		
-		ResponsePackage rp = new ResponsePackage(stmt);
+		originalDevices = importanceSort(originalDevices);
+		ResponsePackage rp = new ResponsePackage(stmt, originalDevices, updatedDevices, dmf);
 		
 		return rp;
 	}

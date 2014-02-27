@@ -3,15 +3,22 @@ package functions;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import types.Device;
 
 public class ResponsePackage {
 	
 	Statement stmt;
+	List<Device> originalDevices;
+	List<Device> devices;
+	DMF dmf;
 	
-	public ResponsePackage(Statement stmt) {
+	public ResponsePackage(Statement stmt, List<Device> originalDevices, List<Device> devices, DMF dmf) {
 		this.stmt = stmt;
+		this.originalDevices = originalDevices;
+		this.devices = devices;
+		this.dmf = dmf;
 	}
 	
 	// Power saver mode
@@ -21,7 +28,8 @@ public class ResponsePackage {
 		device.setDeviceUsage(deviceUsage);
 		
 		try {
-			stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + deviceUsage + " WHERE DeviceID = " + device.getDeviceID());
+			
+			dmf.modifyDevice(device);
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -64,7 +72,7 @@ public class ResponsePackage {
 	protected void turnOn(Device device, int deviceUsage) {
 		device.setDeviceUsage(deviceUsage);
 		try {
-			stmt.executeUpdate("UPDATE Devices SET DeviceUsage = " + deviceUsage + " WHERE DeviceID = " + device.getDeviceID());
+			dmf.modifyDevice(device);
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -75,10 +83,24 @@ public class ResponsePackage {
 	protected void turnOff(Device device) {
 		device.setDeviceUsage(0);
 		try {
-			stmt.executeUpdate("UPDATE Devices SET DeviceUsage = 0 WHERE DeviceID = " + device.getDeviceID());
+			dmf.modifyDevice(device);
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	// Display devices' usage as percentage
+	protected int[] wattsToPercent() {
+			
+		int[] devicePercentage = new int[originalDevices.size()];
+		double percent = 0.0;
+		for (int i = 0; i < originalDevices.size(); i++) {
+			percent = ((double) devices.get(i).getDeviceUsage() / (double) originalDevices.get(i).getDeviceUsage()) * 100.0;
+			percent = Math.floor(percent);
+			devicePercentage[i] = (int) percent;
+		}
+		
+		return devicePercentage;
 	}
 }

@@ -7,16 +7,12 @@ import types.*;
 
 public class ResponseFunction {
 	
-	private Statement stmt;
-	private List<Device> updatedDevices;
 	private List<Device> originalDevices;
 	private int currentGridDeficit;
 	private DMF dmf;
 	
-	public ResponseFunction(Statement stmt, List<Device> updatedDevices, List<Device> originalDevices, int currentGridDeficit, DMF dmf) {
-		this.stmt = stmt;
-		this.updatedDevices = updatedDevices;
-		this.originalDevices = originalDevices;
+	public ResponseFunction(List<Device> originalDevices, int currentGridDeficit, DMF dmf) {
+		this.originalDevices = importanceSort(originalDevices);
 		this.currentGridDeficit = currentGridDeficit;
 		this.dmf = dmf;
 	}
@@ -49,7 +45,7 @@ public class ResponseFunction {
 		}
 	}
 	
-	// Get an arbitrary device usage max. Rank devices by priority. Modify and share the device usage across all devices to meet max device usage.
+	// Rank devices by priority. Modify devices' usage so that the current grid deficit becomes 0
 	protected List<Device> powerConsumption(List<Device> devices) {
 		
 		List<Device> adjustedDevices = devices;
@@ -69,7 +65,6 @@ public class ResponseFunction {
 				adjustedDevices.get(i).setDeviceUsage(0);
 					
 				// Update device usage in database
-					
 				keepOrder(adjustedDevices);
 			}
 			
@@ -79,7 +74,7 @@ public class ResponseFunction {
 		// Get total number of priority levels with at least one device
 		int totalPriorities = totalPriority(adjustedDevices);
 		
-		// Calculate the device usage percentage for each priority level
+		// Calculate the current grid deficit percentage for each priority level
 		int[] distribution = distribution(totalPriorities);
 		
 		// All devices group by priority level
@@ -241,13 +236,12 @@ public class ResponseFunction {
 			}
 			
 			// Replace the old devices' usage with the new values from the new array list
-			adjustedDevices = modifiedDevices;
+			adjustedDevices = modifiedDevices;	
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		updatedDevices = adjustedDevices;
 		return adjustedDevices;
 	}
 	
@@ -292,7 +286,6 @@ public class ResponseFunction {
 	protected int[] distribution(int totalPriorities) {
 		
 		// Arbitrary initial device usage
-		
 
 		List<List<Integer>> adjustmentList = new ArrayList<List<Integer>>();
 		for (int i = 0; i < 10; i++) {
@@ -388,6 +381,7 @@ public class ResponseFunction {
 		
 		List<List<Device>> devicesByPriority = new ArrayList<List<Device>>();
 		
+		// Create 10 array lists and add them to the devicesByPriority list
 		for (int i = 0; i < 10; i++) {
 			List<Device> device = new ArrayList<Device>();
 			devicesByPriority.add(device);
@@ -421,18 +415,75 @@ public class ResponseFunction {
 	}
 	
 	// Receive response packages from devices
-	protected ResponsePackage responsePackage() {
+	protected ResponsePackage responsePackage(List<Device> devices, int[] devicesPercentages) {
 		
-		originalDevices = importanceSort(originalDevices);
-		ResponsePackage rp = new ResponsePackage(stmt, originalDevices, updatedDevices, dmf);
+		ResponsePackage rp = new ResponsePackage(devices, devicesPercentages);
 		
 		return rp;
 	}
 	
-	// Communication with Control Interface Function
-//	public void sentToCF() {
-//		CF cf = new CF();
-//		cf.receiveResponsePackage(responsePackage());
-//	}
-	
+	// Send wireless signal
+	protected void sentWirelessSignal(Device device) {
+			
+		int deviceUsage = device.getDeviceUsage();
+			
+		// Sent the device usage value to the device
+	}
+		
+	// Receive instructions from the Control Interface Function
+	protected void receiveInstruction(Instruction instructions) {
+			
+		// If an instruction required devices to turn on
+		/*
+		Get the list of devices from the Instruction object and all the values each device demands
+		Put the values into a integer array of size = the total devices that needs to be turn on
+		turnOn(devices, deviceUsage);
+		*/
+			
+		// If an instruction required devices to turn off
+		/*
+		Get the list of devices from the Instruction object that needs to be turn off
+		turnOff(devices);
+			*/
+	}
+		
+	// Turn on devices
+	protected void turnOn(List<Device> devices, int[] deviceUsage) {
+		for (int i = 0; i < devices.size(); i++) {
+			devices.get(i).setDeviceUsage(deviceUsage[i]);
+			try {
+				dmf.modifyDevice(devices.get(i));
+			} 
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+			
+	// Turn off devices
+	protected void turnOff(List<Device> devices) {
+		for (int i = 0; i < devices.size(); i++) {
+			devices.get(i).setDeviceUsage(0);
+			try {
+				dmf.modifyDevice(devices.get(i));
+			} 
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+		
+	// Display devices' usage as percentage	
+	protected int[] wattsToPercent(List<Device> devices) {
+				
+		int[] devicePercentage = new int[originalDevices.size()];
+		double percent = 0.0;
+		for (int i = 0; i < originalDevices.size(); i++) {
+			percent = ((double) devices.get(i).getDeviceUsage() / (double) originalDevices.get(i).getDeviceUsage()) * 100.0;
+			percent = Math.floor(percent);
+			devicePercentage[i] = (int) percent;
+		}
+			
+		return devicePercentage;
+	}
 }

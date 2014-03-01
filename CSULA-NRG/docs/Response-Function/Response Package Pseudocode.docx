@@ -11,7 +11,7 @@ class ResponsePackage {
 	}
 	
 	// Communication with Control Interface Function
-  void sentToCIF() {
+  	void sentToCIF() {
 		//Send the response package to the Control Interface Function
 	}
 

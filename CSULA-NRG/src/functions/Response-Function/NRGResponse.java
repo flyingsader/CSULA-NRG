@@ -62,13 +62,12 @@ public class NRGResponse {
 		    // Generate a random deficit
 		    int currentDeficit = randomCurrentDeficit(ddm.getDevices());
 		    
-		    ResponseFunction rf = new ResponseFunction(stmt, dmf.getAllDevices(), dmf.getAllDevices(), currentDeficit, dmf);
+		    ResponseFunction rf = new ResponseFunction(dmf.getAllDevices(), currentDeficit, dmf);
 		        
 		    // Rank the devices in order of importance (0: Most important, 9: Least important)
 		    List<Device> sortedDevices = rf.importanceSort(dmf.getAllDevices());
 		    
-		    DevicesTable dt = new DevicesTable(stmt, sortedDevices, sortedDevices.size(), rf.totalPriority(sortedDevices), totalDeviceUsage(dmf.getAllDevices()), 0);
-
+		    DevicesTable dt = new DevicesTable(sortedDevices, sortedDevices.size(), rf.totalPriority(sortedDevices), totalDeviceUsage(dmf.getAllDevices()), 0);
 		    System.out.println("Total Device Usage: " + totalDeviceUsage(dmf.getAllDevices()));
 		    
 		    while(!dt.isClicked()) {
@@ -77,12 +76,10 @@ public class NRGResponse {
 		        
 		    System.out.println("Current Deficit: " + currentDeficit);
 		    
-		    // Adjust the devices' power usage appropriately
-		    
 		    List<Device> modifiedDevices = rf.powerConsumption(sortedDevices);
 		    System.out.println("Total Device Usage After: " + totalDeviceUsage(modifiedDevices));
 		    
-		    dt = new DevicesTable(stmt, modifiedDevices, rf.responsePackage().wattsToPercent(), sortedDevices.size(), currentDeficit, rf.totalPriority(sortedDevices));
+		    dt = new DevicesTable(modifiedDevices, rf.wattsToPercent(modifiedDevices), sortedDevices.size(), currentDeficit, rf.totalPriority(sortedDevices));
 		        
 			stmt.close();
 		}

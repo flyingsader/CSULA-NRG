@@ -2,45 +2,39 @@ package functions;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.*;
 import javax.swing.*;
 import java.util.List;
 import types.*;
 
 public class DevicesTable extends JFrame {
-
+	
+	private static final long serialVersionUID = 1L;
 	private JButton limitButton = new JButton("Limit Power");
 	private JPanel jp = new JPanel();
 	private JLabel currentDeficit;
 	private JLabel totalDeviceUsageLabel;
 	private JLabel priorities;
-	private int totalRecords;
-	private int remainingCurrentDeficit;
-	private int totalDeviceUsage;
-	private int prioritiesLevels;
 	private boolean clicked = false;
 		
-	public DevicesTable(Statement stmt, List<Device> devices, int[] devicePercentage, int totalRecords, int remainingCurrentDeficit, int prioritiesLevels) {
-			
-		this.totalRecords = totalRecords;
-		this.remainingCurrentDeficit = remainingCurrentDeficit;
-		this.prioritiesLevels = prioritiesLevels;
+	public DevicesTable(List<Device> devices, int[] devicePercentage, int totalRecords, int remainingCurrentDeficit, int prioritiesLevels) {
 			
 		setLayout(new BorderLayout());
 			
 		JTable devicesData = new JTable();
 			
 		String[] columnLabels = {"Device ID", "Device Usage Percentage", "Priority"};
-			
+				
 		// Create a row-column string array to store the record
 		String[][] records = new String[totalRecords][3];
-				
-		// Store the record in the row-column string array
-		for (int i = 0; i < records.length; i++) {
+			
+		// Store the record in the row-column string array	
+		for (int i = 0; i < records.length; i++) {	
 			records[i][0] = String.valueOf(devices.get(i).getDeviceID());
 			records[i][1] = String.valueOf(devicePercentage[i]);
 			records[i][2] = String.valueOf(devices.get(i).getPriority());
 		}
+				
+		// Add the record to the table
 		devicesData = new JTable(records, columnLabels);
 		devicesData.setAutoCreateRowSorter(true);
 			
@@ -62,11 +56,7 @@ public class DevicesTable extends JFrame {
 		add(BorderLayout.CENTER, scrollPane);
 	}
 		
-	public DevicesTable(Statement stmt, List<Device> devices, int totalRecords, int prioritiesLevels, int totalDeviceUsage, int thisWindow) {
-			
-		this.totalRecords = totalRecords;
-		this.prioritiesLevels = prioritiesLevels;
-		this.totalDeviceUsage = totalDeviceUsage;
+	public DevicesTable(List<Device> devices, int totalRecords, int prioritiesLevels, int totalDeviceUsage, int thisWindow) {
 			
 		setLayout(new BorderLayout());
 			
@@ -78,7 +68,7 @@ public class DevicesTable extends JFrame {
 		String[][] records = new String[totalRecords][3];
 				
 		// Store the record in the row-column string array
-		for (int i = 0; i < records.length; i++) {
+		for (int i = 0; i < records.length; i++) {				
 			records[i][0] = String.valueOf(devices.get(i).getDeviceID());
 			records[i][1] = String.valueOf(devices.get(i).getDeviceUsage());
 			records[i][2] = String.valueOf(devices.get(i).getPriority());
@@ -94,9 +84,9 @@ public class DevicesTable extends JFrame {
 			
 		JScrollPane scrollPane = new JScrollPane(devicesData);
 			
-		ButtonListener listener = new ButtonListener(stmt);
+		ButtonListener listener = new ButtonListener();
 		limitButton.addActionListener(listener);
-		
+			
 		setTitle("Devices Table");
 		setSize(300, 300);
 		setLocationRelativeTo(null);
@@ -113,11 +103,9 @@ public class DevicesTable extends JFrame {
 		
 	class ButtonListener implements ActionListener {
 			
-		Statement stmt;
-			
 		// Constructor
-		public ButtonListener(Statement stmt) {
-			this.stmt = stmt;
+		public ButtonListener() {
+			
 		}
 			
 		// Exit the window

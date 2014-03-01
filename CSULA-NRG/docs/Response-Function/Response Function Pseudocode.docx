@@ -92,7 +92,7 @@ class ResponseFunction {
 				
 				// Get the sum of all devices' usage for the particular priority level
 				FOR every integer from the current list’s size of the devicesByPriority list down to 0			
-          sumOfDeviceUsage -> sumOfDeviceUsage + the current device’s usage of the current list of the devicesByPriority list
+          				sumOfDeviceUsage -> sumOfDeviceUsage + the current device’s usage of the current list of the devicesByPriority list
 				ENDFOR
 				
 				// Decrease the deficit by decreasing the devices' usages to a minimum of 10 to keep all devices on
@@ -126,7 +126,7 @@ class ResponseFunction {
 					FOR every integer from the current list’s size of the devicesByPriority list down to 0
 						IF the current device’s usage of the current list of the devicesByPriority list == deficitToRemove THEN
 							Set the current device’s usage of the current list of the devicesByPriority list to 10	
-              remainingCurrentGridDeficit -> remainingCurrentGridDeficit – deficitToRemove - 10
+              						remainingCurrentGridDeficit -> remainingCurrentGridDeficit – deficitToRemove - 10
 							break
 						ELSE IF the current device’s usage of the current list of the devicesByPriority list < deficitToRemove THEN
 
@@ -160,7 +160,7 @@ class ResponseFunction {
 								// Decrease the deficit
 								IF the current device’s usage of the current list of the devicesByPriority list >= remainingCurrentGridDeficit THEN
 									Set the current device’s usage of the current list of the devicesByPriority list as the difference of its usage and the remainingCurrentGridDeficit
-                  remainingCurrentGridDeficit -> 0
+                  							remainingCurrentGridDeficit -> 0
 								ELSE
 									remainingCurrentGridDeficit -> remainingCurrentGridDeficit - the current device’s usage of the current list of the devicesByPriority list
 									Set the current device’s usage of the current list of the devicesByPriority list to 0
@@ -199,7 +199,7 @@ class ResponseFunction {
 	}
 	
 	// Get the number of devices for each priority
-  int[] numOfDevicesWithPriority(List<Device> devices) {
+  	int[] numOfDevicesWithPriority(List<Device> devices) {
 		int[] numOfDevicesWithPriority -> new int[10]
 		FOR every device starting with i = 0 and every value of numOfDevicesWithPriority starting with index j =0
 			IF  the current device’s priority == j THEN
@@ -229,7 +229,8 @@ class ResponseFunction {
 	}
 	
 	// Distribute power percent usage appropriately
-  int[] distribution(int totalPriorities) {
+  	int[] distribution(int totalPriorities) {
+		
 		// Arbitrary initial device usage
 		List<List<Integer>> adjustmentList -> new ArrayList<List<Integer>>()
 		FOR every integer from 0 to 9
@@ -238,14 +239,14 @@ class ResponseFunction {
 		ENDFOR
 		Add 100 to the first list of the adjustmentList
 		Add 40 and 60 to the second list of the adjustmentList
-    Add 10, 30, and 60 to the third list of the adjustmentList
-    Add 10, 20, 30, and 40 to the fourth list of the adjustmentList
-    Add 9, 10, 18, 27, and 36 to the fifth list of the adjustmentList
-    Add 6, 10, 12, 18, 24, and 30 to the sixth list of the adjustmentList
-    Add 4, 8, 12, 16, 16, 20, and 24 to the seventh list of the adjustmentList
-    Add 3, 6, 9, 12, 15, 16, 18, and 21 to the eighth list of the adjustmentList
-    Add 2, 5, 7, 10, 12, 12, 15, 17, and 20 to the ninth list of the adjustmentList
-    Add 2, 4, 6, 8, 10, 10, 12, 14, 16, and 18 to the tenth list of the adjustmentList		
+    		Add 10, 30, and 60 to the third list of the adjustmentList
+    		Add 10, 20, 30, and 40 to the fourth list of the adjustmentList
+    		Add 9, 10, 18, 27, and 36 to the fifth list of the adjustmentList
+    		Add 6, 10, 12, 18, 24, and 30 to the sixth list of the adjustmentList
+    		Add 4, 8, 12, 16, 16, 20, and 24 to the seventh list of the adjustmentList
+    		Add 3, 6, 9, 12, 15, 16, 18, and 21 to the eighth list of the adjustmentList
+    		Add 2, 5, 7, 10, 12, 12, 15, 17, and 20 to the ninth list of the adjustmentList
+    		Add 2, 4, 6, 8, 10, 10, 12, 14, 16, and 18 to the tenth list of the adjustmentList		
 		double adjustment -> adjustmentList.get(totalPriorities - 1).get(0)
 		int[] distribution -> new int[totalPriorities]
 		int j -> 1
@@ -262,7 +263,7 @@ class ResponseFunction {
 	List<List<Device>> devicesByPriority(List<Device> devices) {
 		List<List<Device>> devicesByPriority -> new ArrayList<List<Device>>()
 		
-    // Create 10 array lists and add them to the devicesByPriority list
+    		// Create 10 array lists and add them to the devicesByPriority list
 		FOR every integer from 0 to 9
 			List<Device> device -> new ArrayList<Device>()
 			Add a array list to devicesByPriority
@@ -272,7 +273,7 @@ class ResponseFunction {
 		FOR every device starting with i = 0 and j = 0 as the priority level
 			IF the current device’s priority == j THEN
 				Add the current device to the current priority list in the devicesByPriority				
-        INCREMENT i By 1
+        			INCREMENT i By 1
 			ELSE IF the current device’s priority > j THEN
 				INCREMENT j By 1
 			ENDIF
@@ -344,14 +345,13 @@ class ResponseFunction {
 	}
 	
 	// Display devices' usage as percentage	
-  int[] wattsToPercent(List<Device> devices) {	
+  	int[] wattsToPercent(List<Device> devices) {	
 		int[] devicePercentage -> new int[originalDevices.size()]
 		double percent -> 0.0
 		FOR every original device
-			percent -> (current device usage / current original device usage) * 100.0
-      percent -> Math.floor(percent)
+			percent -> (current device usage / current original device usage) * 100.0percent -> Math.floor(percent)
 			devicePercentage[i] -> (int) percent
 		ENDFOR
 		return devicePercentage
-  }
+	}
 }

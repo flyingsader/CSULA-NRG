@@ -1,0 +1,25 @@
+Response Package Pseudocode
+
+class ResponsePackage {
+	
+	List<Device> devices
+	int[] devicesPercentages
+	
+	ResponsePackage(List<Device> devices, int[] devicesPercentages) {
+		this.devices -> devices
+		this.devicesPercentages -> devicesPercentages
+	}
+	
+	// Communication with Control Interface Function
+  void sentToCIF() {
+		//Send the response package to the Control Interface Function
+	}
+
+	List<Device> getDevices() {
+		return devices
+	}
+
+	int[] getDevicesPercentages() {
+		return devicesPercentages
+	}
+}

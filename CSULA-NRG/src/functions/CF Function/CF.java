@@ -43,11 +43,13 @@ public class CF extends JFrame {
 	private JButton mainTwo = new JButton("Return To Main Menu");
 	private JButton submit = new JButton("Submit");
 	private JButton searchType = new JButton("Search");
-	private JButton searchPriority = new JButton("Search");
+	// private JButton searchPriority = new JButton("Search");
 	private JButton setInst = new JButton("add instructions");
 	private JButton removeInst = new JButton("remove instructions");
 	private JButton add = new JButton("add");
 	private JButton remove = new JButton("remove");
+	private JButton sendNewInst = new JButton("Send Instructions");
+
 	// JLabel
 	private JLabel userName, password, search, timestamp;
 	// JTextField
@@ -82,7 +84,7 @@ public class CF extends JFrame {
 		List<Device> controlList = fun.getAllDevices();
 		List<Device> devices = new ArrayList<Device>();
 		for (Device d : controlList) {
-			if (d.getDeviceDesc().equals(type)) {
+			if (d.getDeviceDesc().equalsIgnoreCase(type)) {
 				devices.add(d);
 			}
 
@@ -108,12 +110,15 @@ public class CF extends JFrame {
 
 	private void removeDeviceList(List<ControlDevice> allInstructions, int type)
 			throws SQLException {
+		int index = 0;
 		for (Iterator<ControlDevice> iter = allInstructions.iterator(); iter
 				.hasNext();) {
-			ControlDevice curDevice = iter.next();
-			System.out.println(allInstructions.indexOf(curDevice) + type + "!!!!!!!!!!!!!!!!!!!");
-			if (allInstructions.indexOf(curDevice) == type)
+			ControlDevice c = iter.next();
+			if (index == type) {
 				iter.remove();
+				break;
+			}
+			index++;
 		}
 	}
 
@@ -150,13 +155,14 @@ public class CF extends JFrame {
 		curInst.append("Current Instructions: --------------------\n");
 		if (!allInstructions.isEmpty()) {
 			for (ControlDevice d : allInstructions) {
+				curInst.append("#: " + allInstructions.indexOf(d) + "\n");
 				curInst.append("Type: " + d.getType() + " ");
 				if (d.isSwtich()) {
 					curInst.append("Switch is: on ");
 				} else {
 					curInst.append("Switch is: off ");
 				}
-				curInst.append("Due Date: " + d.getDue() + " ");
+				curInst.append("Due Date: " + d.getDue() + "\n");
 				for (Device dt : d.getControlDevices()) {
 
 					curInst.append(dt.getDeviceID() + ", " + dt.getDeviceDesc()
@@ -175,13 +181,14 @@ public class CF extends JFrame {
 		deviceInstTwo.append("Current Instructions: --------------------\n");
 		if (!allInstructions.isEmpty()) {
 			for (ControlDevice d : allInstructions) {
+				deviceInstTwo.append("#: " + allInstructions.indexOf(d) + "\n");
 				deviceInstTwo.append("Type: " + d.getType() + " ");
 				if (d.isSwtich()) {
 					deviceInstTwo.append("Switch is: on ");
 				} else {
 					deviceInstTwo.append("Switch is: off ");
 				}
-				deviceInstTwo.append("Due Date: " + d.getDue() + " ");
+				deviceInstTwo.append("Due Date: " + d.getDue() + "\n");
 				for (Device dt : d.getControlDevices()) {
 
 					deviceInstTwo.append(dt.getDeviceID() + ", "
@@ -218,12 +225,12 @@ public class CF extends JFrame {
 		// graphs
 		TemperatureGraph temperature = new TemperatureGraph();
 		WindGraph windSpeed = new WindGraph();
-		TemperatureGraph temperatureTwo = new TemperatureGraph();
-		TemperatureGraph temperatureThird = new TemperatureGraph();
+		SolarRadationGraph radation = new SolarRadationGraph();
+		DeficitGraph deficit = new DeficitGraph();
 		graphPanel.add(temperature);
 		graphPanel.add(windSpeed);
-		graphPanel.add(temperatureTwo);
-		graphPanel.add(temperatureThird);
+		graphPanel.add(deficit);
+		graphPanel.add(radation);
 
 		mainPanel.add(graphPanel, BorderLayout.CENTER);
 
@@ -379,7 +386,7 @@ public class CF extends JFrame {
 
 		pane.add("remove", removePanel);
 
-// //////////////////////////////////////////////////////////////////////////////////////////
+		// //////////////////////////////////////////////////////////////////////////////////////////
 		controls.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
@@ -392,22 +399,19 @@ public class CF extends JFrame {
 				layout.show(pane, "add");
 			}
 		});
-		removeInst.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent actionEvent) {
-				layout.show(pane, "remove");
-			}
-		});
+
 		add.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
 				if (RB_TYPE_TWO.isSelected()) {
+
 					try {
-						allInstructions.add(new ControlDevice(
-								false,
-								"device",
-								setDueDate((String) timeframe.getSelectedItem()),
-								setDeviceList(newInst.getText().trim())));
+						if (!setDeviceList(newInst.getText().trim()).isEmpty()) {
+							allInstructions.add(new ControlDevice(false,
+									"device", setDueDate((String) timeframe
+											.getSelectedItem()),
+									setDeviceList(newInst.getText().trim())));
+						}
 					} catch (SQLException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -416,19 +420,28 @@ public class CF extends JFrame {
 					deviceInst.append("");
 				}
 				if (RB_PR_TWO.isSelected()) {
+					boolean isNum = true;
 					try {
-						allInstructions
-								.add(new ControlDevice(false, "device",
-										setDueDate((String) timeframe
-												.getSelectedItem()),
-										setDeviceList(Integer.parseInt(newInst
-												.getText().trim()))));
+						Integer.parseInt(newInst.getText().trim());
+					} catch (NumberFormatException e) {
+						isNum = false;
+					}
+					try {
+						if (!setDeviceList(
+								Integer.parseInt(newInst.getText().trim()))
+								.isEmpty() && isNum) {
+							allInstructions.add(new ControlDevice(false,
+									"device", setDueDate((String) timeframe
+											.getSelectedItem()),
+									setDeviceList(Integer.parseInt(newInst
+											.getText().trim()))));
+						}
 					} catch (SQLException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-
 				}
+
 				try {
 					display();
 				} catch (SQLException e) {
@@ -458,8 +471,7 @@ public class CF extends JFrame {
 			public void actionPerformed(ActionEvent actionEvent) {
 				try {
 					removeDeviceList(allInstructions,
-							Integer.parseInt(removeIn
-									.getText().trim()));
+							Integer.parseInt(removeIn.getText().trim()));
 				} catch (NumberFormatException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -468,7 +480,11 @@ public class CF extends JFrame {
 					e.printStackTrace();
 				}
 				deviceInstTwo.setText("");
+				deviceInst.setText("");
+				curInst.setText("");
 				try {
+					display();
+					displayTwo();
 					displayThree();
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -482,7 +498,8 @@ public class CF extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
 
-				if (RB_TYPE.isSelected()) {
+				if (RB_TYPE.isSelected()
+						&& !searchT.getText().trim().equals("")) {
 					deviceOutput.setText("");
 					String id = searchT.getText().trim();
 					deviceOutput.append("Results by type \n");
@@ -498,19 +515,39 @@ public class CF extends JFrame {
 						}
 					}
 				}
-				if (RB_PR.isSelected()) {
+				if (RB_PR.isSelected() && !searchT.getText().trim().equals("")) {
 					deviceOutput.setText("");
-					int id = Integer.parseInt(searchT.getText().trim());
-					deviceOutput.append("Results by priority \n");
-					for (Device data : testList) {
+					boolean isInt = true;
+					try {
+						Integer.parseInt(searchT.getText().trim());
+					} catch (NumberFormatException e) {
+						isInt = false;
+					}
+					if (isInt) {
 
-						if (id == data.getPriority()) {
+						int id = Integer.parseInt(searchT.getText().trim());
 
+						deviceOutput.append("Results by priority \n");
+						for (Device data : testList) {
+
+							if (id == data.getPriority()) {
+
+								deviceOutput.append(data.getDeviceID() + ", "
+										+ data.getDeviceDesc() + ", "
+										+ data.getDeviceOwner() + ", "
+										+ data.getDeviceUsage() + ", "
+										+ data.getPriority() + "\n");
+							}
+						}
+					} else {
+						deviceOutput.append("All entries \n");
+						for (Device data : testList) {
 							deviceOutput.append(data.getDeviceID() + ", "
 									+ data.getDeviceDesc() + ", "
 									+ data.getDeviceOwner() + ", "
 									+ data.getDeviceUsage() + ", "
 									+ data.getPriority() + "\n");
+
 						}
 					}
 				}
@@ -532,7 +569,6 @@ public class CF extends JFrame {
 		});
 
 	}
-
 
 	public static void main(String[] arg) throws SQLException {
 		CF f = new CF();

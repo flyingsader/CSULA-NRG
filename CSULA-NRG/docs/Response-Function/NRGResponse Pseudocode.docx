@@ -1,0 +1,95 @@
+NRGResponse Pseudocode
+
+class NRGResponse {
+
+	static void main(String[] args) {
+
+		try {
+			DMF dmf -> new DMF()
+
+			Statement stmt -> dmf.connection.createStatement()
+		    
+			File file -> new File("NRGv2.sql")
+			FileReader fr  ->new FileReader(file)
+			BufferedReader br -> new BufferedReader(fr)
+		        
+			// Create tables
+			String query -> ""
+			int countLine -> 0
+		    	WHILE query != null and countLine < 5
+		    	
+		    		Add each line the buffered reader read to the query
+
+		        	IF query != null and query != "" and query does not contains the word null and query is not empty and query does not start with " " THEN
+		        		
+		        		IF the last character of the query is ; THEN
+			        		stmt.execute(query)
+			        		query -> ""
+			        		countLine -> 0
+			       		ENDIF
+		        	ELSE
+		        		INCREMENT countLine By 1
+		        	ENG IF	
+		    	ENDWHILE
+		        
+		    	Close the buffered reader
+		    	Close the file reader
+		        
+		   	 // Insert data to the tables
+		    	DummyDataMaker ddm -> new DummyDataMaker()
+		        
+		    	FOR every device in the dummy data maker
+		    		Add the device to the dmf
+		    	ENDFOR
+		        
+		    	FOR every grid data in the dummy data maker
+		    		Add the grid data to the dmf
+		    	ENDFOR
+		        
+		    	FOR every weather data in the dummy data maker
+		    		Add the weather data to the dmf
+		    	ENDFOR
+		    
+		    	// Generate a random deficit
+		    	int currentDeficit -> randomCurrentDeficit(ddm.getDevices())
+		    
+		    	ResponseFunction rf -> new ResponseFunction(dmf.getAllDevices(), currentDeficit, dmf)
+		        
+		    	// Rank the devices in order of importance (0: Most important, 9: Least important)
+		    	List<Device> sortedDevices -> rf.importanceSort(dmf.getAllDevices())
+		    
+		    	DevicesTable dt -> new DevicesTable(sortedDevices, sortedDevices.size(), rf.totalPriority(sortedDevices), totalDeviceUsage(dmf.getAllDevices()), 0)		    
+		    
+			WHILE dt is not clicked
+		       	ENDWHILE
+		    
+		    	List<Device> modifiedDevices -> rf.powerConsumption(sortedDevices)		    
+		    
+			dt -> new DevicesTable(modifiedDevices, rf.wattsToPercent(modifiedDevices), sortedDevices.size(), currentDeficit, rf.totalPriority(sortedDevices))
+		        
+			Close the statement
+		}
+		catch (Exception e){
+			e.printStackTrace()
+		}
+	}
+	
+	static int totalDeviceUsage(List<Device> devices) {
+		
+		int totalDeviceUsage -> 0
+		
+		FOR every device
+			Add the device’s usage to the totalDeviceUsage
+		ENDFOR
+		
+		return totalDeviceUsage
+	}
+	
+	static int randomCurrentDeficit(List<Device> devices) {
+		
+		Random random -> new Random()
+		int currentDeficit -> random.nextInt(totalDeviceUsage(devices) + 1)
+		
+		return currentDeficit
+	}
+}

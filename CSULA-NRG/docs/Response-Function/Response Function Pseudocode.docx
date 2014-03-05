@@ -1,0 +1,357 @@
+Response Function Pseudocode
+
+class ResponseFunction {
+	private List<Device> originalDevices
+	private int currentGridDeficit
+	private DMF dmf
+	
+	ResponseFunction(List<Device> originalDevices, int currentGridDeficit, DMF dmf) {
+		this.originalDevices -> importanceSort(originalDevices)
+		this.currentGridDeficit -> currentGridDeficit
+		this.dmf -> dmf
+	}
+	
+	// Sort devices by priority level 0 to 9
+	List<Device> importanceSort(List<Device> devices) {
+		List<Device> sortDevices -> new ArrayList<Device>()
+		FOR every integer from 0 to 9
+			FOR every device in the device’s list
+				IF the current device’s priority == i THEN
+					Add the current device to the sortDevices list
+				ENDIF
+			ENDFOR
+		ENDFOR
+		return sortDevices
+	}
+	
+	// When updating devices, remove and add the devices back to the database
+	void keepOrder(List<Device> devices) {
+		FOR every device in the devices list
+			try {
+				Update the device in the database using dmf
+			} catch (SQLException e) {
+				e.printStackTrace()
+			}
+		ENDFOR
+	}
+	
+	// Rank devices by priority. Modify devices' usage so that the current grid deficit becomes 0
+	List<Device> powerConsumption(List<Device> devices) {
+		List<Device> adjustedDevices -> devices
+		int totalDeviceUsage -> 0
+		
+		// Get total device usage of all devices
+		FOR every device in the devices list
+			totalDeviceUsage -> totalDeviceUsage + the current device’s usage of the devices list
+		ENDFOR
+		
+		// If the current grid deficit requires all devices to shutdown
+		IF currentGridDeficit == totalDeviceUsage THEN
+			FOR every device in the adjustedDevices list
+				Set the current device’s usage to 0 
+
+				// Update device usage in database
+				keepOrder(adjustedDevices)
+			ENDFOR
+			return adjustedDevices
+		ENDIF
+		
+		// Get total number of priority levels with at least one device
+		int totalPriorities -> totalPriority(adjustedDevices)
+		
+		// Calculate the current grid deficit percentage for each priority level
+		int[] distribution -> distribution(totalPriorities)
+		
+		// All devices group by priority level
+		List<List<Device>> devicesByPriority -> devicesByPriority(devices)
+		
+		try {
+
+			int remainingCurrentGridDeficit -> currentGridDeficit
+			
+			// Get the number of devices in each priority level
+			int[] totalPrioritiesDevices -> numOfDevicesWithPriority(adjustedDevices)
+			int k -> the length of totalPrioritiesDevices - 1
+			int numOfDevices -> totalPrioritiesDevices[k]
+			FOR every element of the distribution array				
+				
+				// Deficit to remove for the current priority level
+				double deficitToRemove -> currentGridDeficit * distribution[i] * 0.01
+				IF k >= 0 THEN
+					numOfDevices -> totalPrioritiesDevices[k]
+				ELSE
+					break
+				ENDIF
+				
+				// Skip priority levels that has no devices
+				WHILE numOfDevices == 0
+					DECREMENT K By 1
+					numOfDevices -> totalPrioritiesDevices[k]
+				ENDWHILE
+				int sumOfDeviceUsage -> 0
+				
+				// Get the sum of all devices' usage for the particular priority level
+				FOR every integer from the current list’s size of the devicesByPriority list down to 0			
+          				sumOfDeviceUsage -> sumOfDeviceUsage + the current device’s usage of the current list of the devicesByPriority list
+				ENDFOR
+				
+				// Decrease the deficit by decreasing the devices' usages to a minimum of 10 to keep all devices on
+				IF sumOfDeviceUsage == (int) deficitToRemove THEN
+					
+					// Skip devices with usages less than 10
+					int totalDevicesGreaterThanTen -> 0
+					FOR every integer from the current list’s size of the devicesByPriority list down to 0
+						IF the current device’s usage of the current list of the devicesByPriority list >= 10 THEN
+							Set the current device’s usage of the current list of the devicesByPriority list to 10
+							INCREMENT totalDevicesGreaterThanTen By 1
+						ELSE
+							deficitToRemove -> deficitToRemove -  the current device’s usage of the current list of the devicesByPriority list
+						ENDIF
+					ENDFOR
+					remainingCurrentGridDeficit -> remainingCurrentGridDeficit – deficitToRemove - (totalDevicesGreaterThanTen * 10)
+				ELSE IF sumOfDeviceUsage < deficitToRemove THEN
+					
+					// Skip devices with usages less than 10
+					int totalDevicesGreaterThanTen -> 0
+					FOR every integer from the current list’s size of the devicesByPriority list down to 0
+						IF the current device’s usage of the current list of the devicesByPriority list >= 10 THEN
+							Set the current device’s usage of the current list of the devicesByPriority list  to 10
+							INCREMENT totalDevicesGreaterThanTen By 1
+						ELSE
+							sumOfDeviceUsage -> sumOfDeviceUsage -  the current device’s usage of the current list of the devicesByPriority list
+						ENDIF
+					ENDFOR
+					remainingCurrentGridDeficit -> remainingCurrentGridDeficit – sumOfDeviceUsage - (totalDevicesGreaterThanTen * 10)
+				ELSE
+					FOR every integer from the current list’s size of the devicesByPriority list down to 0
+						IF the current device’s usage of the current list of the devicesByPriority list == deficitToRemove THEN
+							Set the current device’s usage of the current list of the devicesByPriority list to 10	
+              						remainingCurrentGridDeficit -> remainingCurrentGridDeficit – deficitToRemove - 10
+							break
+						ELSE IF the current device’s usage of the current list of the devicesByPriority list < deficitToRemove THEN
+
+							// Only decrease device usage from devices with device usage greater than or equal to 10
+							IF the current device’s usage of the current list of the devicesByPriority list >= 10 THEN
+								remainingCurrentGridDeficit -> remainingCurrentGridDeficit - the current device’s usage of the current list of the devicesByPriority list - 10
+								deficitToRemove -> deficitToRemove – the current device’s usage of the current list of the devicesByPriority list
+								Set the current device’s usage of the current list of the devicesByPriority list to 10
+							ENDIF
+						ELSE
+							Set the current device’s usage of the current list of the devicesByPriority list as the difference of itself and deficitToRemove
+							remainingCurrentGridDeficit -> remainingCurrentGridDeficit – deficitToRemove
+							break
+						ENDIF
+					ENDFOR
+				ENDIF
+				DECREMENT K By 1
+			ENDFOR
+			
+			// If there is still remaining current grid deficit, decrease the deficit. Some devices will have to shutdown (device's usage is 0)
+			IF remainingCurrentGridDeficit > 0 THEN
+				FOR every list of the devicesByPriority list
+					IF remainingCurrentGridDeficit == 0 THEN
+						break
+					ENDIF
+					int j -> the current list’s size of the devicesByPriority - 1
+					IF the current list of the devicesByPriority list is not empty THEN
+						WHILE j >= 0
+							IF the current device’s usage of the current list of the devicesByPriority list > 0 THEN
+								
+								// Decrease the deficit
+								IF the current device’s usage of the current list of the devicesByPriority list >= remainingCurrentGridDeficit THEN
+									Set the current device’s usage of the current list of the devicesByPriority list as the difference of its usage and the remainingCurrentGridDeficit
+                  							remainingCurrentGridDeficit -> 0
+								ELSE
+									remainingCurrentGridDeficit -> remainingCurrentGridDeficit - the current device’s usage of the current list of the devicesByPriority list
+									Set the current device’s usage of the current list of the devicesByPriority list to 0
+								ENDIF
+							ENDIF
+							DECREMENT J By 1
+						ENDWHILE
+					ENDIF
+				ENDFOR
+			ENDIF
+			
+			// Add the newly updated devices into a new array list
+			List<Device> modifiedDevices -> new ArrayList<Device>()
+			FOR every list in the devicesByPriority list				
+				int j -> 0
+				IF the current list in the devicesByPriority list is not empty THEN
+					WHILE j < the current list’s size
+						Add the current list’s current device to modifiedDevices
+						INCREMENT j By 1
+					ENDWHILE
+				ENDIF
+			ENDFOR
+			
+			// Update device usage in database
+			FOR every modified device
+				Update the modified device in the database using dmf
+			ENDFOR
+			
+			// Replace the old devices' usage with the new values from the new array list
+			adjustedDevices -> modifiedDevices	
+		}
+		catch (SQLException e) {
+			e.printStackTrace()
+		}
+		return adjustedDevices
+	}
+	
+	// Get the number of devices for each priority
+  	int[] numOfDevicesWithPriority(List<Device> devices) {
+		int[] numOfDevicesWithPriority -> new int[10]
+		FOR every device starting with i = 0 and every value of numOfDevicesWithPriority starting with index j =0
+			IF  the current device’s priority == j THEN
+				INCRMENT numOfDevicesWithPriority[j] By 1
+				INCREMENT i By 1
+			ELSE
+				INCREMENT j By 1
+			ENDIF
+		ENDFOR
+		return numOfDevicesWithPriority
+	}
+	
+	// Get the number of priorities
+	int totalPriority(List<Device> devices) {
+		int totalPriorities -> 0
+		int priority -> 0
+		FOR every device
+			IF the current device’s priority == priority THEN
+				INCREMENT totalPriorities By 1
+				INCREMENT priority By 1
+			ELSE IF the current device’s priority > priority THEN
+				priority -> the current device’s priority + 1
+				INCREMENT totalPriorities By 1
+			ENDIF
+		ENDFOR
+		return totalPriorities
+	}
+	
+	// Distribute power percent usage appropriately
+  	int[] distribution(int totalPriorities) {
+		
+		// Arbitrary initial device usage
+		List<List<Integer>> adjustmentList -> new ArrayList<List<Integer>>()
+		FOR every integer from 0 to 9
+			List<Integer> list -> new ArrayList<Integer>()
+			Add the list to adjustmentList
+		ENDFOR
+		Add 100 to the first list of the adjustmentList
+		Add 40 and 60 to the second list of the adjustmentList
+    		Add 10, 30, and 60 to the third list of the adjustmentList
+    		Add 10, 20, 30, and 40 to the fourth list of the adjustmentList
+    		Add 9, 10, 18, 27, and 36 to the fifth list of the adjustmentList
+    		Add 6, 10, 12, 18, 24, and 30 to the sixth list of the adjustmentList
+    		Add 4, 8, 12, 16, 16, 20, and 24 to the seventh list of the adjustmentList
+    		Add 3, 6, 9, 12, 15, 16, 18, and 21 to the eighth list of the adjustmentList
+    		Add 2, 5, 7, 10, 12, 12, 15, 17, and 20 to the ninth list of the adjustmentList
+    		Add 2, 4, 6, 8, 10, 10, 12, 14, 16, and 18 to the tenth list of the adjustmentList		
+		double adjustment -> adjustmentList.get(totalPriorities - 1).get(0)
+		int[] distribution -> new int[totalPriorities]
+		int j -> 1
+		FOR every value in the distribution array
+			distribution[i] -> (int) adjustment
+			IF j >= the length of distribution THEN break ENDIF
+			adjustment -> adjustmentList.get(totalPriorities - 1).get(j)
+			INCREMENT j By 1
+		ENDFOR
+		return distribution
+	}
+	
+	// All devices group by priority level
+	List<List<Device>> devicesByPriority(List<Device> devices) {
+		List<List<Device>> devicesByPriority -> new ArrayList<List<Device>>()
+		
+    		// Create 10 array lists and add them to the devicesByPriority list
+		FOR every integer from 0 to 9
+			List<Device> device -> new ArrayList<Device>()
+			Add a array list to devicesByPriority
+		ENDFOR
+		
+		// Add devices to the array list with priority level labeled
+		FOR every device starting with i = 0 and j = 0 as the priority level
+			IF the current device’s priority == j THEN
+				Add the current device to the current priority list in the devicesByPriority				
+        			INCREMENT i By 1
+			ELSE IF the current device’s priority > j THEN
+				INCREMENT j By 1
+			ENDIF
+		ENDFOR
+		return devicesByPriority
+	}
+	
+	// Adjust ranking of a device based on weather data
+	List<Device> adjustRanking(List<Device> devices) {
+		// Retrieve weather data and adjust each device's ranking
+		FOR every device
+			// Analyze weather data and set device priority
+		ENDFOR
+		return devices
+	}
+	
+	// Receive response packages from devices
+	ResponsePackage responsePackage(List<Device> devices, int[] devicesPercentages) {
+		ResponsePackage rp -> new ResponsePackage(devices, devicesPercentages)
+		return rp
+	}
+	
+	// Send wireless signal
+	void sentWirelessSignal(Device device) {
+		int deviceUsage -> device.getDeviceUsage()
+		// Sent the device usage value to the device
+	}
+		
+	// Receive instructions from the Control Interface Function
+	void receiveInstruction(Instruction instructions) {
+		// If an instruction required devices to turn on
+		/*
+		Get the list of devices from the Instruction object and all the values each device demands
+		Put the values into a integer array of size = the total devices that needs to be turn on
+		turnOn(devices, deviceUsage)
+		*/
+			
+		// If an instruction required devices to turn off
+		/*
+		Get the list of devices from the Instruction object that needs to be turn off
+		turnOff(devices)
+		*/
+	}
+		
+	// Turn on devices
+	void turnOn(List<Device> devices, int[] deviceUsage) {
+		FOR every device
+			Set its usage to the current value in the deviceUsage integer array
+			try {
+				Update the device in the database using dmf
+			} 
+			catch (SQLException e) {
+				e.printStackTrace()
+			}
+		ENDFOR
+	}
+			
+	// Turn off devices
+	void turnOff(List<Device> devices) {
+		FOR every device
+			Set the current device’s usage to 0
+			try {
+				Update the device in the database using dmf
+			} 
+			catch (SQLException e) {
+				e.printStackTrace()
+			}
+		ENDFOR
+	}
+	
+	// Display devices' usage as percentage	
+  	int[] wattsToPercent(List<Device> devices) {	
+		int[] devicePercentage -> new int[originalDevices.size()]
+		double percent -> 0.0
+		FOR every original device
+			percent -> (current device usage / current original device usage) * 100.0percent -> Math.floor(percent)
+			devicePercentage[i] -> (int) percent
+		ENDFOR
+		return devicePercentage
+	}
+}

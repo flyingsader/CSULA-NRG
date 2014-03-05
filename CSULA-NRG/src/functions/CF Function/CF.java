@@ -350,6 +350,7 @@ public class CF extends JFrame {
 		rightAddPanel.add(new JLabel("By: "));
 		rightAddPanel.add(RB_TYPE_TWO);
 		rightAddPanel.add(RB_PR_TWO);
+		RB_TYPE_TWO.setSelected(true);
 		rightAddPanel.add(add);
 		rightAddPanel.add(mainTwo);
 		addPanel.add(rightAddPanel, BorderLayout.SOUTH);
@@ -474,7 +475,7 @@ public class CF extends JFrame {
 							Integer.parseInt(removeIn.getText().trim()));
 				} catch (NumberFormatException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					//e.printStackTrace();
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -505,7 +506,7 @@ public class CF extends JFrame {
 					deviceOutput.append("Results by type \n");
 					for (Device data : testList) {
 
-						if (id.equals(data.getDeviceDesc())) {
+						if (id.equalsIgnoreCase(data.getDeviceDesc())) {
 
 							deviceOutput.append(data.getDeviceID() + ", "
 									+ data.getDeviceDesc() + ", "

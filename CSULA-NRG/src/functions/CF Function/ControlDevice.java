@@ -1,4 +1,3 @@
-
 import java.awt.List;
 import java.security.Timestamp;
 import java.util.ArrayList;
@@ -11,15 +10,18 @@ public class ControlDevice {
 	private boolean swtich;
 	private String due;
 	private String type;
-	
-	public ControlDevice(boolean p, String t, String du, java.util.List<Device> list){
-		this.controlDevices=list;
-		this.swtich=p;
-		this.due=du;
-		this.type=t;
-		
+
+	public ControlDevice() {
 	}
-	
+
+	public ControlDevice(boolean p, String t, String du,
+			java.util.List<Device> list) {
+		this.controlDevices = list;
+		this.swtich = p;
+		this.due = du;
+		this.type = t;
+
+	}
 
 	public boolean isSwtich() {
 		return swtich;
@@ -44,6 +46,7 @@ public class ControlDevice {
 	public void setType(String type) {
 		this.type = type;
 	}
+
 	public java.util.List<Device> getControlDevices() {
 		return controlDevices;
 	}
@@ -51,7 +54,4 @@ public class ControlDevice {
 	public void setControlDevices(java.util.List<Device> controlDevices) {
 		this.controlDevices = controlDevices;
 	}
-	
-	//TODO: add method for package to response function
-	
 }

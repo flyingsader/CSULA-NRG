@@ -6,8 +6,8 @@ public class GridData {
 	int capacity;
 	int demand;
 
-	public static final String TimestampFormat = "yyyy-MM-dd hh:mm:ss:SS";
-	private static final String TimestampStringFormat = "%s-%s-%s %s:00:00:00";
+	public static final String TimestampFormat = "yyyy-MM-dd hh:mm:ss";
+	private static final String TimestampStringFormat = "%s-%s-%s %s:00:00";
 
 	public GridData(int day, int hour) {
 		this.locality = "Los Angeles";
@@ -47,6 +47,13 @@ public class GridData {
 
 	}
 
+	public GridData(String loc, String time, int cap, int dem){
+		locality = loc;
+		timestamp = time;
+		capacity = cap;
+		demand = dem;
+	}
+
 	public String getLocality() {
 		return locality;
 	}
@@ -80,8 +87,8 @@ public class GridData {
 	}
 
 	public String toSqlEntry() {
-		return "Insert Into GridData Values('" + this.locality + "', '"
-				+ this.timestamp + "', " + this.capacity + ", " + this.demand
+		return "Insert Into GridData Values('" + this.locality + "', "
+				+ "STR_TO_DATE('" + this.timestamp + "', '%Y-%m-%d %H:%i:%s')" + ", " + this.capacity + ", " + this.demand
 				+ ");";
 	}
 }

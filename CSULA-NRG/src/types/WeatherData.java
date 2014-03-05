@@ -16,8 +16,8 @@ public class WeatherData {
 	int windDir;
 	int solarRad;
 
-	public static final String TimestampFormat = "yyyy-MM-dd hh:mm:ss:SS";
-	private static final String TimestampStringFormat = "%s-%s-%s %s:00:00:00";
+	public static final String TimestampFormat = "yyyy-MM-dd hh:mm:ss";
+	private static final String TimestampStringFormat = "%s-%s-%s %s:00:00";
 
 	public WeatherData(int day, int hour) {
 		this.locality = "Los Angeles";
@@ -132,8 +132,8 @@ public class WeatherData {
 	}
 
 	public String toSqlEntry() {
-		return "Insert Into WeatherData Values('" + this.locality + "', '"
-				+ this.timestamp + "', " + this.temperature + ", "
+		return "Insert Into WeatherData Values('" + this.locality + "', "
+				+ "STR_TO_DATE('" + this.timestamp + "', '%Y-%m-%d %H:%i:%s')" + ", " + this.temperature + ", "
 				+ this.windspeed + ", " + this.windDir + ", " + this.solarRad
 				+ ");";
 	}

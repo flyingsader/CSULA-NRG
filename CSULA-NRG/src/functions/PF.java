@@ -21,78 +21,99 @@ public class PF {
 	public PF() {
 		try {
 			_dmf = new DMF();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 	}
 
 	public void sendWeatherDataToDMF(WeatherData weatherData) {
-		_dmf.insertWeatherData(weatherData);
+		try {
+			System.out.println("Sending weather data to DMF...");
+			_dmf.insertWeatherData(weatherData);
+			System.out.println("Weather data successfully sent.");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void sendGridDataToDMF(GridData gridData) {
-		_dmf.insertGridData(gridData);
+		try {
+			System.out.println("Sending grid data to DMF...");
+			_dmf.insertGridData(gridData);
+			System.out.println("Grid data successfully sent.");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void sendGridDeficitPredictionToDMF() {
 		try {
+			Date started = new Date();
+			System.out.println("Time started: " + started.toString());
+			System.out.println();
+			System.out.println("Pulling historical data from DMF...");
+			System.out.println();
 			// request data to analyze from DMF
 			List<WeatherData> wData = _dmf.getAllWeatherData();
 			List<GridData> gData = _dmf.getAllGridData();
-			
+
+			System.out.println("Mapping data by timestamp...");
+			System.out.println();
+
 			// map weather and grid data by timestamp
 			HashMap<WeatherData, GridData> map = mapData(wData, gData);
+
+			System.out.println("Data mapped. Querying past years...");
+			System.out.println();
 
 			// grab past years of days to detect pattern
 			HashMap<WeatherData, GridData> pastYears = getPastYears(map);
 
+			System.out.println("Calculating capacity and demand...");
+			System.out.println();
+
 			// calculate average of grid demand for past years
 			int totalDemand = 0;
 			int totalCap = 0;
-			for(GridData gd: pastYears.values())
-			{
+			for (GridData gd : pastYears.values()) {
 				totalDemand += gd.getDemand();
 				totalCap += gd.getCapacity();
 			}
 
+			System.out.println(String.format("Total capacity: " + totalCap));
+			System.out.println(String.format("Total demand: " + totalDemand));
+			System.out.println();
+
 			double avgCap = totalCap / pastYears.size();
 			double avgDemand = totalDemand / pastYears.size();
-			// send expected grid data to DMF
 
-			_dmf.setDeficit((int) (avgCap - (avgDemand * 1.01)));
+			System.out.println(String.format("Average capacity: %.2f", avgCap));
+			System.out
+					.println(String.format("Average demand: %.2f", avgDemand));
+			System.out.println();
+
+			// send expected grid data to DMF
+			double difference = avgCap - (avgDemand * 1.01);
+			System.out.println(String.format("Capacity - Demand * 1.01: %.2f",
+					difference));
+			if (difference > 0.0)
+				System.out.println("There's a predicted surplus");
+			else
+				System.out.println("There's a predicted deficit");
+			System.out.println();
+			System.out.println("Sending prediction to DMF...");
+			System.out.println();
+			_dmf.setDeficit(0 - ((int) difference));
+			System.out.println("Prediction sent successfully");
+			System.out.println();
+			System.out.println("Time ended: " + new Date().toString());
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private Entry<WeatherData, GridData> getLatestWeather(
-			HashMap<WeatherData, GridData> map) {
-
-		Entry<WeatherData, GridData> entry = (Entry<WeatherData, GridData>) map
-				.entrySet().toArray()[0];
-
-		try {
-			Date mostRecent = new SimpleDateFormat(WeatherData.TimestampFormat)
-					.parse(entry.getKey().getTimestamp());
-
-			for (Entry<WeatherData, GridData> wg : map.entrySet()) {
-				Date ts = new SimpleDateFormat(WeatherData.TimestampFormat)
-						.parse(wg.getKey().getTimestamp());
-				
-				if(ts.after(mostRecent))
-				{
-					entry = wg;
-					mostRecent = ts;
-				}
-			}
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return entry;
 	}
 
 	private HashMap<WeatherData, GridData> mapData(List<WeatherData> wData,
@@ -111,17 +132,6 @@ public class PF {
 		return map;
 	}
 
-	private boolean isInsideDemandThreshold(int demand, GridData value) {
-		boolean insideThreshold = false;
-		int demandThreshold = 10;
-
-		if (demand + demandThreshold > value.getDemand()
-				&& demand - demandThreshold < value.getDemand())
-			insideThreshold = true;
-
-		return insideThreshold;
-	}
-
 	@SuppressWarnings({ "deprecation", "static-access" })
 	private HashMap<WeatherData, GridData> getPastYears(
 			HashMap<WeatherData, GridData> map) throws ParseException {
@@ -133,10 +143,11 @@ public class PF {
 					Locale.ENGLISH);
 			Date result = df.parse(target);
 			Calendar tomorrow = Calendar.getInstance();
-			tomorrow.add(Calendar.DAY_OF_YEAR, 1);
+			tomorrow.add(Calendar.HOUR, 1);
 
 			if (result.getMonth() == tomorrow.MONTH
-					&& result.getDay() == tomorrow.DAY_OF_MONTH)
+					&& result.getDay() == tomorrow.DAY_OF_MONTH
+					&& result.getHours() == tomorrow.HOUR_OF_DAY)
 				data.put(w, map.get(w));
 		}
 
@@ -144,7 +155,12 @@ public class PF {
 	}
 
 	public static void main(String[] args) {
-
+		PF _pf = new PF();
+		_pf.sendGridDataToDMF(new GridData(3,5,2014,10));
+		System.out.println();
+		_pf.sendWeatherDataToDMF(new WeatherData(3,5,2014,10));
+		System.out.println();
+		_pf.sendGridDeficitPredictionToDMF();
 	}
 
 }
